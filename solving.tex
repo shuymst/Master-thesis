@@ -11,7 +11,6 @@
 状態$s$から最善手を選び続けて獲得できる得点の合計の期待値を状態$s$の\textgt{価値}と呼び， $V(s)$で表すことにする．
 このとき$V(s)$は式~\ref{eq:value}のように再帰的な形式で書くことができる．
 ただし$r(s,a)$は状態$s$から行動$a$をとって獲得する得点， $s_\text{next} \in \mathcal{T}(s,a)$は状態$s$から行動$a$をとって遷移しうる次の状態の集合を表す~(図~\ref{fig:state_afterstate}を参照)．
-
 \begin{align}
     V(s) =
     \begin{cases}
@@ -23,7 +22,7 @@
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\linewidth{}]{figures/state_afterstate.pdf}
+    \includegraphics[width=\linewidth{}]{figures/value_function_.pdf}
     \caption{式~\ref{eq:value}の補足図 \label{fig:state_afterstate}}
 \end{figure}
 
@@ -37,10 +36,8 @@
 
 \section{2048のミニゲームの完全解析}
 \label{sec:mini2048}
-本節の内容は文献~\cite{3x3_2048}および文献~\cite{4x3_2048}を元に執筆された．
-
 基本的なルールは2048と同じで盤面サイズを$4\times4$から縮小したゲームを完全解析することを考える．
-盤面サイズに関わらず2048の完全解析は以下の$2$つのステップに分けて行うことができる．
+盤面サイズに関わらず， 以下の$2$つのステップを順番に行うことで2048を完全解析することができる．
 
 \begin{enumerate}
     \item ゲームに現れうるすべての状態の列挙
@@ -48,11 +45,42 @@
 \end{enumerate}
 
 \ref{subsec:enumeration}節と~\ref{subsec:calculation}節で具体的な方法について述べる．
+なお本節の内容は文献~\cite{3x3_2048}および文献~\cite{4x3_2048}を元に執筆された．
 
 \subsection{幅優先探索によるすべての状態の列挙}
 \label{subsec:enumeration}
-まずゲームに現れうるすべての状態を列挙する．
-これはキューを用いた幅優先探索によって行うことができる．
+完全解析の第1ステップとして幅優先探索によってゲームに現れうるすべての状態を列挙する．
+まず初期状態をキューに詰めて探索を開始する．
+キューの先頭の状態$s$を取り出し， $s$から遷移可能な次の状態$s_{\text{next}} \in \mathcal{T}(s)$をキューに追加する．
+これをキューが空になるまで繰り返すことで， すべての状態を列挙することができる．
+
+ここで$s_{\text{next}} \in \mathcal{T}(s)$がすでに発見済みであるか確認するために， これまでに発見した状態を管理する集合が必要である．
+素朴な方法ではメモリでこれまでに発見した全状態を管理することで行えるが， 状態数が非常に大きな場合にはメモリの容量を超えてしまう．
+
+そこで~\ref{sec:property}節で説明した時刻によってゲーム木を整理する．
+時刻$t$の状態は時刻$t+2$か$t+4$の状態にしか遷移しないため， 時刻$t+2$と$t+4$の発見した状態をメモリで管理すれば十分である．
+よって時刻が最小の$4$の状態から$2$刻みで順番に列挙を行うことで， ディスクを効率的に活用することができる．
+以上を踏まえた疑似コードをAlgorithm~\ref{alg:bfs}に示す．
+
+\begin{algorithm}[tb]
+\caption{幅優先探索によるすべての状態の列挙}
+\label{alg:bfs}
+\begin{algorithmic}[1]
+
+\Function {enumeration}{$t$}
+    \ForAll {$s_t \in \text{queue}_t$} 
+        \ForAll {$s_{t+2} \gets s_t$}
+            \State $\text{queue}_{t+2}.\text{push}(s_{t+2})$
+        \EndFor
+        \If {$element > max$}
+            \State $max \gets element$
+        \EndIf
+    \EndFor
+    \State \Return $max$
+\EndFunction
+
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{後退解析による状態の価値の計算}
 \label{subsec:calculation}
