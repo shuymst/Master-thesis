@@ -1,0 +1,40 @@
+\documentclass[11pt, dvipdfmx, openany]{jsbook}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{hyperref}
+\usepackage{pxjahyper}
+\usepackage[a4paper]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{amsfonts}
+\usepackage[noend]{algpseudocode}
+\usepackage{algorithm}
+\usepackage{bm}
+\usepackage{here}
+\usepackage{color}
+\usepackage[hang,small,bf]{caption}
+\usepackage[subrefformat=parens]{subcaption}
+\hypersetup{colorlinks=false, hidelinks}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\renewcommand{\baselinestretch}{1.1}
+\captionsetup{compatibility=false}
+\usepackage{url}
+
+\setlength{\textwidth}{\fullwidth}  %本文の幅(textwidth)を全体の幅(=ヘッダ部の幅)にそろえる
+\setlength{\evensidemargin}{\oddsidemargin} %偶数ページの余白と奇数ページの余白をそろえる
+
+\begin{document}
+\title{2048の研究}
+\author{山下修平}
+\maketitle 
+
+\tableofcontents
+\clearpage
+
+% 本文
+\input{intro.tex}
+\input{game.tex}
+\input{solving.tex}
+
+\bibliography{ref} % 研究に役に立ちそうならなんでも入れとく
+\bibliographystyle{junsrt}
+
+\end{document}
