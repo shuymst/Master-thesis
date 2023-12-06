@@ -6,7 +6,7 @@
 \section{強化学習の概要}
 \label{sec:rl_general}
 まず本節では2048との関係を踏まえつつ， 一般的な強化学習の概要について記述する.
-なお本節の内容は全体に文献~\cite{Sutton1998}および文献~\cite{deepRL}を参照して書かれた.
+なお本節の内容は全体に文献~\cite{Sutton1998}を参照して書かれた.
 
 \subsection{マルコフ決定過程}
 \label{subsec:mdp}
@@ -17,15 +17,15 @@
 このような問題設定はマルコフ決定過程~(MDP)~というモデルによって定式化されている．
 MDPは以下の$4$つの要素で構成される. 
 \begin{itemize}
-  \item 状態集合\textit{S}
-  \item 行動集合\textit{A}
-  \item 状態遷移関数$p:S \times A \times S \rightarrow [0,1]$
-  \item 報酬関数$r:S \times A \times S \rightarrow \mathbb{R}$
+  \item 状態集合 $\mathcal{S}$
+  \item 行動集合 $\mathcal{A}$
+  \item 状態遷移関数$p:\mathcal{S} \times \mathcal{A} \times \mathcal{S} \rightarrow [0,1]$
+  \item 報酬関数$r:\mathcal{S} \times \mathcal{A} \times \mathcal{S} \rightarrow \mathbb{R}$
 \end{itemize}
-エージェントはステップ$t$で状態$s_t \in S$から行動$a_t \in A$を選択する．
-そして確率$p(s_{t+1}|s_t,a_t)$で次の状態$s_{t+1}$に遷移し， $r(s_t,a_t,s_{t+1})$の実現値$R_{t+1}$を即時報酬として獲得する．
+エージェントはステップ$t$で状態$S_t \in \mathcal{S}$から行動$A_t \in \mathcal{A}$を選択する．
+そして確率$p(S_{t+1}|S_t, A_t)$で次の状態$S_{t+1}$に遷移し， $R_{t+1} = r(S_t, A_t, S_{t+1})$を即時報酬として獲得する．
 状態遷移関数と報酬関数は環境のダイナミクスと呼ばれることがある. 
-図\ref{fig:mdp}にMDPの模式図を示す.
+図\ref{fig:mdp}にMDPの概念図を示す.
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth{}]{figures/MDP.pdf}
@@ -34,8 +34,7 @@ MDPは以下の$4$つの要素で構成される.
 
 状態集合と行動集合が有限であるMDPを有限MDPと呼ぶ.
 2048は有限MDPにそのまま当てはまるゲームである．
-行動集合\textit{A}はプレイが選ぶ上下左右に対応し， 報酬はプレイヤが獲得する得点に対応する．
-ここで2048では状態遷移得点の獲得の仕方は決定的であるため， 以降報酬関数$r$は決定的な関数であるものとして記述する．
+行動集合\textit{A}はプレイが選ぶ上下左右に対応し， 報酬はプレイヤが獲得する得点に直接対応する．
 
 一般に強化学習で扱う問題には, エージェントと環境のやり取りが終わる終了状態が存在するepisodic taskと終了状態が存在しないcontinuing taskが存在する. 
 episodic taskではエージェントと環境のやり取りを初期状態から終了状態までのエピソードと呼ばれる単位で分割することができる.
@@ -81,32 +80,30 @@ $\pi_*$に従うときの状態価値関数は最適状態価値関数と呼ば�
   \caption{最適価値関数のバックアップ図 (文献\cite{Sutton1998}より引用) \label{fig:backup}}
 \end{figure}
 
-最適状態価値関数$v_{\pi_*}$の下で具体的な
-また$v_{\pi_*}$
-
-\begin{align}
-  \label{eq:bellman_opt1}
-  v_{\pi_*}(s) &= \max_a \sum_{s'}p(s'|s,a)[r(s,a,s') + \gamma v_{\pi_*}(s')] \\
-  \label{eq:bellman_opt2}
-  q_{\pi_*}(s,a) &= \sum_{s'}p(s'|s,a)[r(s,a,s') +\gamma \max_{a'}q_{\pi_*}(s',a')]
-\end{align}
-
-式\ref{eq:bellman_opt1}は最適方策$\pi_*$の下での状態$s$の価値は， すべての行動$a \in A(s)$について$a$を選択した場合の遷移後の状態$s'$の価値と即時報酬の合計を環境のダイナミクスについて期待値を取ったものの最大値であるということを示している.
-式\ref{eq:bellman_opt2}も同様に解釈できる．
-最適方策の状態価値関数$v_{\pi_*}(s)$, 状態価値関数$q_{\pi_*}(s,a)$をそれぞれ最適状態価値関数， 最適状態行動価値関数という．
-
 \subsection{価値ベースな手法}
-価値ベースな手法は価値関数を
-Q学習は状態価値関数を以下の更新式~\ref{eq:q_learning}に従って学習するアルゴリズムである．
+状態$s$における最適方策に従った具体的な行動は$\argmax \mathbb{E}[R_{t+1} + \gamma v_{\pi_*}(S_{t+1}) | S_t=s, A_t=a]$と， $1$ステップ先の状態を探索してそれらの最適状態価値関数を参照することで計算できる．
+最適行動価値関数が参照できれば， $1$ステップ先の状態を探索する必要すらなく， 単に$\argmax q_{\pi_*}(s, a)$を選択すればよい．
+最適方策を得るために価値関数を学習する手法は価値ベースな手法と呼ばれる．
+
+Q学習は最も基本的な価値ベースな手法の$1$つで， 最適行動価値関数$q_{\pi_*}$の推定値$Q$を得られた経験から学習する．
+状態$S_t$から行動$A_t$を選択し， 報酬$R_{t+1}$を獲得して次の状態$S_{t+1}$に遷移したとする．
+このときQ学習は以下の更新式~\ref{eq:q_learning}に従って$Q(S_t, A_t)$を更新する．
 \begin{align}
   \label{eq:q_learning}
-  Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t)]
+  Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t)] 
 \end{align}
+式~\ref{eq:q_learning}は現在の推定値$Q(S_t, A_t)$を， ベルマン最適方程式~\ref{eq:bellman_q_opt}の右辺の推定値である$R_{t+1} + \gamma \max_a Q(S_{t+1}, a)$に近づけていると解釈できる．
+任意の$(s, a) \in \mathcal{S} \times \mathcal{A}$について$Q(s,a)$が更新され続けるという条件の下で， Q学習は収束が保証されている．
 
+状態集合や行動集合が大きい場合や有限でない場合には， テーブル形式でQ値を保持することができないため何らかの関数近似を行う必要がある．
+近年では深層学習の研究の発展により， 関数近似の方法としてニューラルネットワークが用いられることが多い．
+価値関数や方策をニューラルネットワークで近似する手法は， まとめて深層強化学習と呼ばれる．
+Deep Q Network~(DQN)~\cite{DQN}は深層強化学習の先駆けとして有名な手法である． 
+名前が示す通りDQNはQ値をニューラルネットワークで近似し手法である．
+DQNの発表以降， 様々な工夫が提案され続けている．
+詳細は文献~\cite{deepRL}の$4$節などを参照されたい．
 
 \subsection{方策ベースな手法}
-
-\section{深層強化学習}
 
 \section{AlphaZero}
 Silverらが提案したAlphaZero~\cite{AlphaZero}は二人ゼロ和完全確定情報ゲームを対象とした有力な深層強化学習手法である．
@@ -126,4 +123,21 @@ MCTSは選択， 展開， 評価， 逆伝播という$4$つのステップを�
 \subsection*{逆伝播}
 
 \section{2048への強化学習の応用}
+\ref{sec:rl_general}節では強化学習一般の概要について説明した．
+これを踏まえて本節では， 2048を対象とした強化学習研究の先行研究について概説する．
+\begin{align}
+  \label{eq:td_afterstate}
+  Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t)]
+\end{align}
+
+
+\subsection{TD afterstate学習}
+Szubertら~\cite{Szubert}はTD afterstate学習と呼ばれる価値ベースの学習手法を提案した．
+TD afterstate学習ではafterstateの価値
+N-tupleネットワークは2048の盤面特徴量の
+提案したTD afterstate学習は現在でも主流の手法の$1$つである．
+
+
+\subsection{Afterstate PPO}
+
 \subsection{Stochastic MuZero}
