@@ -47,29 +47,42 @@ episodic taskではエージェントと環境のやり取りを初期状態か�
 \begin{align}
   v_{\pi}(s) \stackrel{\mathrm{def}}{=} \mathbb{E}_{\pi}\left[\sum_{k=0}^T \gamma^k R_{t+k+1}|S_t=s \right]
 \end{align}
-同様に状態$s$から行動$a$を選択し， その後方策$\pi$に従って行動を選択し続けた場合の累積報酬和の期待値である状態行動価値関数$q_{\pi}(s,a)$の定義は以下のようになる．
+同様に状態$s$から行動$a$を選択し， その後方策$\pi$に従って行動を選択し続けた場合の累積報酬和の期待値である行動価値関数$q_{\pi}(s,a)$の定義は以下のようになる．
 \begin{align}
-  q_{\pi}(s,a) \stackrel{\mathrm{def}}{=} = \mathbb{E}_{\pi}\left[\sum_{k=0}^T \gamma^k R_{t+k+1}|S_t=s, A_t=a \right]
+  q_{\pi}(s,a) \stackrel{\mathrm{def}}{=} \mathbb{E}_{\pi}\left[\sum_{k=0}^T \gamma^k R_{t+k+1}|S_t=s, A_t=a \right]
 \end{align}
-この定義の下で， ある状態$s$の価値とその次の状態$s_{\text{next}}$の価値の間の関係は次のベルマン方程式によって記述される．
-\begin{align}
-  v_{\pi}(s) &= \sum_{a \in A} \pi(a|s) \sum_{s_{\text{next}} \in S} p(s_{\text{next}}|s,a)[r(s,a,s_{\text{next}}) + \gamma v_{\pi}(s_{\text{next}})] \\
-  q_{\pi}(s,a) &= \sum_{s_{\text{next}} \in S} p(s_{\text{next}}|s,a)\left[r(s,a,s_{\text{next}}) + \gamma \sum_{a_{\text{next}} \in A} \pi(a_{\text{next}}|s_{\text{next}})q_{\pi}(s_{\text{next}}, a_{\text{next}})\right]
-\end{align}
-すなわち方策$\pi$に従った際のある状態の価値は， 次の状態の価値と即時報酬の合計を環境のダイナミクスと方策の確率分布で期待値を取ったものである. 
-状態行動価値についても同様である.
 
-強化学習の目標はリターンの期待値， すなわち状態価値$v_\pi(s)$を最大化するような方策を環境とのやり取りを通して学習することである．
-よって2つの方策$\pi$と$\pi'$があるとすると， すべての状態$s \in S$について$v_\pi(s) \geq v_{\pi'}(s)$が成り立つならば$\pi$は$\pi'$よりも良い方策だと言える．
-ここから最適方策$\pi_*$はすべての方策の中で最も状態価値関数および状態行動価値関数を大きくするような方策であると定義できる．
+強化学習の目標は多くの報酬を獲得できるような良い方策を見つけることである．
+価値関数の定義より2つの方策$\pi$と$\pi'$があるとすると， すべての状態$s \in S$について$v_\pi(s) \geq v_{\pi'}(s)$が成り立つならば$\pi$は$\pi'$と等価か$\pi'$よりも良い方策だと言える．
+ここで他のすべての方策と比べて等価であるか， それよりも良い方策が少なくとも$1$つ存在する．
+これは最適方策$\pi_*$と呼ばれる方策である．
+$\pi_*$に従うときの状態価値関数は最適状態価値関数と呼ばれ， $v_{\pi_*}$で表される．
+同様に$\pi_*$に従うときの行動価値関数は最適行動価値関数と呼ばれ， $q_{\pi_*}$で表される．
+それぞれの具体的な定義を式~\ref{eq:v_opt}， \ref{eq:q_opt}に示す．
 \begin{align}
-  \label{eq:v_max}
+  \label{eq:v_opt}
   v_{\pi_*}(s) &= \max_\pi v_{\pi}(s) \quad \text{for all } s \in S \\
-  \label{eq:q_max}
+  \label{eq:q_opt}
   q_{\pi_*}(s,a) &= \max_\pi q_{\pi}(s, a) \quad \text{for all } s \in S \text{ and } a \in A(s)
 \end{align}
+このとき$v_{\pi_*}(s) = \max_{a \in A(s)} q_{\pi_*} (s, a)$であるから， 以下の式が導かれる~(図~\ref{fig:backup}を参照)~．
+\begin{align}
+  v_{\pi_*}(s) &= \max_{a \in A(s)} q_{\pi_*} (s, a) \\
+  \label{eq:bellman_v_opt}
+               &= \max_{a \in A(s)} \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a] \\
+  q_{\pi_*}(s, a) &= \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a] \\
+  \label{eq:bellman_q_opt}
+                  &= \mathbb{E}[R_{t+1} + \gamma \max_{a'} q_*(S_{t+1}, a') | S_t=s, A_t=a]
+\end{align}
+式~\ref{eq:bellman_v_opt}， \ref{eq:bellman_q_opt}はベルマン最適方程式と呼ばれる．
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth{}]{figures/backup.pdf}
+  \caption{最適価値関数のバックアップ図 (文献\cite{Sutton1998}より引用) \label{fig:backup}}
+\end{figure}
 
-さらに式\ref{eq:v_max}， \ref{eq:q_max}から次のベルマン最適方程式を導出することができる．
+最適状態価値関数$v_{\pi_*}$の下で具体的な
+また$v_{\pi_*}$
 
 \begin{align}
   \label{eq:bellman_opt1}
