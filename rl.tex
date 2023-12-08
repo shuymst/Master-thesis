@@ -1,4 +1,4 @@
-\chapter{2048を解くためのアプローチ}
+\chapter{2048と強化学習}
 \label{chap:rl}
 これまでに2048を対象とした強化学習の研究は数多くなされてきた． 
 本章では強化学習の概要， および2048に対する強化学習の先行研究について記述する．
@@ -55,21 +55,21 @@ episodic taskではエージェントと環境のやり取りを初期状態か�
 価値関数の定義より2つの方策$\pi$と$\pi'$があるとすると， すべての状態$s \in S$について$v_\pi(s) \geq v_{\pi'}(s)$が成り立つならば$\pi$は$\pi'$と等価か$\pi'$よりも良い方策だと言える．
 ここで他のすべての方策と比べて等価であるか， それよりも良い方策が少なくとも$1$つ存在する．
 これは最適方策$\pi_*$と呼ばれる方策である．
-$\pi_*$に従うときの状態価値関数は最適状態価値関数と呼ばれ， $v_{\pi_*}$で表される．
-同様に$\pi_*$に従うときの行動価値関数は最適行動価値関数と呼ばれ， $q_{\pi_*}$で表される．
+$\pi_*$に従うときの状態価値関数は最適状態価値関数と呼ばれ， $v_*$で表される．
+同様に$\pi_*$に従うときの行動価値関数は最適行動価値関数と呼ばれ， $q_*$で表される．
 それぞれの具体的な定義を式~\ref{eq:v_opt}， \ref{eq:q_opt}に示す．
 \begin{align}
   \label{eq:v_opt}
-  v_{\pi_*}(s) &= \max_\pi v_{\pi}(s) \quad \text{for all } s \in S \\
+  v_*(s) &= \max_\pi v_{\pi}(s) \quad \text{for all } s \in S \\
   \label{eq:q_opt}
-  q_{\pi_*}(s,a) &= \max_\pi q_{\pi}(s, a) \quad \text{for all } s \in S \text{ and } a \in A(s)
+  q_*(s,a) &= \max_\pi q_{\pi}(s, a) \quad \text{for all } s \in S \text{ and } a \in A(s)
 \end{align}
-このとき$v_{\pi_*}(s) = \max_{a \in A(s)} q_{\pi_*} (s, a)$であるから， 以下の式が導かれる~(図~\ref{fig:backup}を参照)~．
+このとき$v_*(s) = \max_{a \in A(s)} q_*(s, a)$であるから， 以下の式が導かれる~(図~\ref{fig:backup}を参照)~．
 \begin{align}
-  v_{\pi_*}(s) &= \max_{a \in A(s)} q_{\pi_*} (s, a) \\
+  v_*(s) &= \max_{a \in A(s)} q_*(s, a) \\
   \label{eq:bellman_v_opt}
                &= \max_{a \in A(s)} \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a] \\
-  q_{\pi_*}(s, a) &= \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a] \\
+  q_*(s, a) &= \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a] \\
   \label{eq:bellman_q_opt}
                   &= \mathbb{E}[R_{t+1} + \gamma \max_{a'} q_*(S_{t+1}, a') | S_t=s, A_t=a]
 \end{align}
@@ -81,11 +81,11 @@ $\pi_*$に従うときの状態価値関数は最適状態価値関数と呼ば�
 \end{figure}
 
 \subsection{価値ベースな手法}
-状態$s$における最適方策に従った具体的な行動は$\argmax \mathbb{E}[R_{t+1} + \gamma v_{\pi_*}(S_{t+1}) | S_t=s, A_t=a]$と， $1$ステップ先の状態を探索してそれらの最適状態価値関数を参照することで計算できる．
-最適行動価値関数が参照できれば， $1$ステップ先の状態を探索する必要すらなく， 単に$\argmax q_{\pi_*}(s, a)$を選択すればよい．
+状態$s$における最適方策に従った具体的な行動は$\argmax \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a]$と， $1$ステップ先の状態を探索してそれらの最適状態価値関数を参照することで計算できる．
+最適行動価値関数が参照できれば， $1$ステップ先の状態を探索する必要すらなく， 単に$\argmax q_*(s, a)$を選択すればよい．
 最適方策を得るために価値関数を学習する手法は価値ベースな手法と呼ばれる．
 
-Q学習は最も基本的な価値ベースな手法の$1$つで， 最適行動価値関数$q_{\pi_*}$の推定値$Q$を得られた経験から学習する．
+Q学習は最も基本的な価値ベースな手法の$1$つで， 最適行動価値関数$q_*$の推定値$Q$を得られた経験から学習する．
 状態$S_t$から行動$A_t$を選択し， 報酬$R_{t+1}$を獲得して次の状態$S_{t+1}$に遷移したとする．
 このときQ学習は以下の更新式~\ref{eq:q_learning}に従って$Q(S_t, A_t)$を更新する．
 \begin{align}
@@ -106,21 +106,45 @@ DQNの発表以降， 様々な工夫が提案され続けている．
 \subsection{方策ベースな手法}
 
 \section{AlphaZero}
-Silverらが提案したAlphaZero~\cite{AlphaZero}は二人ゼロ和完全確定情報ゲームを対象とした有力な深層強化学習手法である．
+Silverらが提案したAlphaZero~\cite{AlphaZero}は， 二人ゼロ和完全確定情報ゲームを対象とした有力な深層強化学習手法である．
 囲碁， 将棋， チェスにおいて当時の有力なプログラムを上回る強さを示した．
 AlphaZeroは盤面の特徴量を入力として方策と価値を出力するニューラルネットワークを， 自己対戦を通して得たデータから学習する．
 自己対戦において， AlphaZeroはモンテカルロ木探索~(MCTS)~というアルゴリズムを使用して指し手を選択する．
 
-MCTSは探索木を構築し， 
-MCTSは選択， 展開， 評価， 逆伝播という$4$つのステップを繰り返すことで良い手を選ぶための手法である．
-各ノードは
+\subsection{モンテカルロ木探索}
+ここではAlphaZeroが使用したモンテカルロ木探索~(MCTS)~について説明する．
+MCTSは探索で発見した各状態~(囲碁や将棋では盤面)~に対応するノードから成る探索木を構築する．
+それぞれの状態と行動の対~$(s,a)$~について， ${N(s,a), W(s,a), Q(s,a), P(s,a)}$という$4$つの統計量を管理する．
+\begin{itemize}
+  \item $N(s,a) \cdots$探索中に$s$から$a$を選択した回数
+  \item $W(s,a) \cdots$最適行動価値$q_*(s,a)$の推定値の累計
+  \item $Q(s,a) \cdots$最適行動価値$q_*(s,a)$の推定値の平均~($W(s,a) / N(s,a)$)
+  \item $P(s,a) \cdots$ニューラルネットワークが評価する$s$から$a$を選択する確率
+\end{itemize}
 
-\subsection*{選択}
+探索木は最初， 現在の盤面に対応するノードである根ノードのみから成る．
+MCTSは選択， 展開， 評価， 逆伝播の$4$つのステップを繰り返すことで， 良い手を選択するための探索手法である．
+この$4$つのステップはまとめてシミュレーションと呼ばれる．
+シミュレーションを繰り返すことで探索木は深くなり， 良い手を選択することができる．
+以下ではそれぞれのステップについて説明する．
+
+\subsubsection*{選択}
 現在のゲーム木の根ノードから有望な子ノードを選択し， 葉ノードに至るまで辿り続ける．
 ここで有望なノードとは暫定の評価の高さと
-\subsection*{展開}
-\subsection*{評価}
-\subsection*{逆伝播}
+\begin{figure}
+  \centering
+  \includegraphics[width=\columnwidth]{figures/selection.pdf}
+  \caption{選択}
+  \label{fig:selection}
+\end{figure}
+
+\subsubsection*{展開}
+\subsubsection*{評価}
+\subsubsection*{逆伝播}
+
+\subsection{ニューラルネットワークの学習}
+MCTSの探索木における各ノードは
+MCTSは選択， 展開， 評価， 逆伝播という$4$つのステップを繰り返すことで良い手を選ぶための手法である．
 
 \section{2048への強化学習の応用}
 \ref{sec:rl_general}節では強化学習一般の概要について説明した．
