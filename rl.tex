@@ -114,37 +114,77 @@ AlphaZeroは盤面の特徴量を入力として方策と価値を出力する�
 \subsection{モンテカルロ木探索}
 ここではAlphaZeroが使用したモンテカルロ木探索~(MCTS)~について説明する．
 MCTSは探索で発見した各状態~(囲碁や将棋では盤面)~に対応するノードから成る探索木を構築する．
-それぞれの状態と行動の対~$(s,a)$~について， ${N(s,a), W(s,a), Q(s,a), P(s,a)}$という$4$つの統計量を管理する．
+探索木中のそれぞれの状態と行動の対~$(s,a)$~について， ${N(s,a), W(s,a), Q(s,a), P(s,a)}$という$4$つの統計量を管理する．
 \begin{itemize}
   \item $N(s,a) \cdots$探索中に$s$から$a$を選択した回数
   \item $W(s,a) \cdots$最適行動価値$q_*(s,a)$の推定値の累計
   \item $Q(s,a) \cdots$最適行動価値$q_*(s,a)$の推定値の平均~($W(s,a) / N(s,a)$)
   \item $P(s,a) \cdots$ニューラルネットワークが評価する$s$から$a$を選択する確率
 \end{itemize}
-
-探索木は最初， 現在の盤面に対応するノードである根ノードのみから成る．
-MCTSは選択， 展開， 評価， 逆伝播の$4$つのステップを繰り返すことで， 良い手を選択するための探索手法である．
+探索木は最初， 現在の状態に対応するノードである根ノードのみから成る．
+MCTSは選択， 評価， 逆伝播， 展開の$4$つのステップを繰り返すことで， 探索木を大きくする．
 この$4$つのステップはまとめてシミュレーションと呼ばれる．
-シミュレーションを繰り返すことで探索木は深くなり， 良い手を選択することができる．
+すなわちシミュレーションを繰り返すことで深い探索を行い， 良い行動を選択することができる．
 以下ではそれぞれのステップについて説明する．
+\subsubsection*{選択~(図~\ref{fig:selection})}
+現在のゲーム木の根ノード$s_0$から有望な行動を選択し， 葉ノード$s_L$に至るまで辿り続ける．
+具体的にはノード$s_t$において，以下の式~\ref{eq:puct}で表される$a_t$を選択する．
+\begin{align}
+  a_t = \argmax_a(Q(s_t,a) + C(s_t)P(s_t,a)\sqrt{N(s_t)}/(1 + N(s_t,a)))
+  \label{eq:puct}
+\end{align}
+ただし$C(s_t)$は探索率， $N(s_t)$はノード$s_t$の訪問回数を表す．
+これは現段階での価値の推定値$Q(s_t,a)$と探索項$C(s_t)P(s_t,a)\sqrt{N(s_t)}/(1 + N(s_t,a))$を合計したものである．
+$N(s_t,a)$が小さい行動ほど探索項は大きな値を示す．
 
-\subsubsection*{選択}
-現在のゲーム木の根ノードから有望な子ノードを選択し， 葉ノードに至るまで辿り続ける．
-ここで有望なノードとは暫定の評価の高さと
+\subsubsection*{評価~(図~\ref{fig:evaluate})}
+選択のステップの葉ノード$s_L$をニューラルネットワーク$f_\theta$により評価する．
+$f_\theta$が評価した$s_L$における方策を$\pi(\cdot|s_L)$， $s_L$の価値を$v$とする．
+
+\subsubsection*{逆伝播~(図~\ref{fig:backpropagate})}
+$s_L$から選択可能なそれぞれの行動$a$について， $N(s_L, a)=0, W(s_L, a)=0, Q(s_L, a)=0, P(s_L, a)=\pi(a|s_L)$と初期化する．
+さらに$s_0$から$s_L$に至る各エッジ$(s_t,a_t)$について， 以下のように各統計量の値を更新する．
+\begin{align*}
+  N(s_t, a_t) &= N(s_t, a_t)+1 \\
+  W(s_t, a_t) &= W(s_t, a_t) + v \\
+  Q(s_t, a_t) &= \frac{W(s_t,a_t)}{N(s_t,a_t)}
+\end{align*}
+
+\subsubsection*{展開~(図~\ref{fig:expand})}
+$s_L$から遷移しうる次の状態を新たなノードとして探索木に追加する．
+
 \begin{figure}
-  \centering
-  \includegraphics[width=\columnwidth]{figures/selection.pdf}
-  \caption{選択}
-  \label{fig:selection}
+  \begin{subfigure}[t]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/selection.pdf}
+    \caption{選択}
+    \label{fig:selection}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/evaluate.pdf}
+    \caption{評価}
+    \label{fig:evaluate}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/backpropagate.pdf}
+    \caption{逆伝播}
+    \label{fig:backpropagate}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/expand.pdf}
+    \caption{展開}
+    \label{fig:expand}
+  \end{subfigure}
+  \caption{モンテカルロ木探索のシミュレーションの各ステップ}
+  \label{fig:mcts}
 \end{figure}
-
-\subsubsection*{展開}
-\subsubsection*{評価}
-\subsubsection*{逆伝播}
 
 \subsection{ニューラルネットワークの学習}
 MCTSの探索木における各ノードは
-MCTSは選択， 展開， 評価， 逆伝播という$4$つのステップを繰り返すことで良い手を選ぶための手法である．
+MCTSは選択， 展開， 評価， 逆伝播という$4$つのステップを繰り返すことで良い行動を選ぶための手法である．
 
 \section{2048への強化学習の応用}
 \ref{sec:rl_general}節では強化学習一般の概要について説明した．
