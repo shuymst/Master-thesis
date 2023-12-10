@@ -98,8 +98,7 @@ Q学習は最も基本的な価値ベースな手法の$1$つで， 最適行動
 状態集合や行動集合が大きい場合や有限でない場合には， テーブル形式でQ値を保持することができないため何らかの関数近似を行う必要がある．
 近年では深層学習の研究の発展により， 関数近似の方法としてニューラルネットワークが用いられることが多い．
 価値関数や方策をニューラルネットワークで近似する手法は， まとめて深層強化学習と呼ばれる．
-Deep Q Network~(DQN)~\cite{DQN}は深層強化学習の先駆けとして有名な手法である． 
-名前が示す通りDQNはQ値をニューラルネットワークで近似し手法である．
+Q値をニューラルネットワークで近似する， Deep Q Network~(DQN)~\cite{DQN}は深層強化学習の先駆けとして有名な手法である． 
 DQNの発表以降， 様々な工夫が提案され続けている．
 詳細は文献~\cite{deepRL}の$4$節などを参照されたい．
 
@@ -139,14 +138,14 @@ $N(s_t,a)$が小さい行動ほど探索項は大きな値を示す．
 
 \subsubsection*{評価~(図~\ref{fig:evaluate})}
 選択のステップの葉ノード$s_L$をニューラルネットワーク$f_\theta$により評価する．
-$f_\theta$が評価した$s_L$における方策を$\pi(\cdot|s_L)$， $s_L$の価値を$v$とする．
+$f_\theta$が評価した$s_L$における方策を$\pi(\cdot|s_L)$， $s_L$の価値を$v_L$とする．
 
 \subsubsection*{逆伝播~(図~\ref{fig:backpropagate})}
 $s_L$から選択可能なそれぞれの行動$a$について， $N(s_L, a)=0, W(s_L, a)=0, Q(s_L, a)=0, P(s_L, a)=\pi(a|s_L)$と初期化する．
 さらに$s_0$から$s_L$に至る各エッジ$(s_t,a_t)$について， 以下のように各統計量の値を更新する．
 \begin{align*}
   N(s_t, a_t) &= N(s_t, a_t)+1 \\
-  W(s_t, a_t) &= W(s_t, a_t) + v \\
+  W(s_t, a_t) &= W(s_t, a_t) + v_L \\
   Q(s_t, a_t) &= \frac{W(s_t,a_t)}{N(s_t,a_t)}
 \end{align*}
 
@@ -154,31 +153,32 @@ $s_L$から選択可能なそれぞれの行動$a$について， $N(s_L, a)=0, 
 $s_L$から遷移しうる次の状態を新たなノードとして探索木に追加する．
 
 \begin{figure}
-  \begin{subfigure}[t]{0.4\columnwidth}
+  \begin{subfigure}[T]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\columnwidth]{figures/selection.pdf}
+    \includegraphics[width=\columnwidth]{figures/selection_.pdf}
     \caption{選択}
     \label{fig:selection}
   \end{subfigure}
-  \begin{subfigure}[t]{0.4\columnwidth}
+  \begin{subfigure}[T]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\columnwidth]{figures/evaluate.pdf}
+    \includegraphics[width=\columnwidth]{figures/evaluate_.pdf}
     \caption{評価}
     \label{fig:evaluate}
   \end{subfigure}
-  \begin{subfigure}[t]{0.4\columnwidth}
+  \begin{subfigure}[T]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\columnwidth]{figures/backpropagate.pdf}
+    \includegraphics[width=\columnwidth]{figures/backpropagate_.pdf}
     \caption{逆伝播}
     \label{fig:backpropagate}
   \end{subfigure}
-  \begin{subfigure}[t]{0.4\columnwidth}
+  \hspace{3cm}
+  \begin{subfigure}[T]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\columnwidth]{figures/expand.pdf}
+    \includegraphics[width=\columnwidth]{figures/expand_.pdf}
     \caption{展開}
     \label{fig:expand}
   \end{subfigure}
-  \caption{モンテカルロ木探索のシミュレーションの各ステップ}
+  \caption{MCTSの各ステップ~(オレンジ色のノードは自分の手番， 青色のノードは相手の手番)}
   \label{fig:mcts}
 \end{figure}
 

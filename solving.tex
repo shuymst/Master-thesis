@@ -11,15 +11,17 @@
 また\ref{sec:rule}節で述べたようにゲームはランダム性を伴うため， 同じ状態から毎回同じ手を選んでも結果は確率的に変動する．
 
 そこで本稿ではある状態$s$における最善手を「$s$から獲得できる得点の合計の期待値が最も高くなるような手」と定義する.
-これは~\ref{chap:rl}節で述べた強化学習の最適状態価値と同じものである．
-本節では状態$s$から最善手を選び続けて獲得できる得点の合計の期待値を状態$s$の最適価値と呼び， $v(s)$で表すことにする．
-このとき$v(s)$は式~\ref{eq:value}のように再帰的な形式で書くことができる．
+これは~\ref{chap:rl}節で述べた強化学習の最適状態価値と等価なものである．
+よって状態$s$から最善手を選び続けて獲得できる得点の合計の期待値を状態$s$の最適価値と呼び， $v_*(s)$で表すことにする．
+このとき$v_*(s)$は式~\ref{eq:value}のように再帰的な形式で書くことができる．
 ただし$r(s,a)$は状態$s$から行動$a$をとって獲得する得点， $s_\text{next} \in \mathcal{T}(s,a)$は状態$s$から行動$a$をとって遷移しうる次の状態の集合を表す~(図~\ref{fig:state_afterstate}を参照)．
+式~\ref{eq:value}の$r(s,a) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s,a)} v_*(s_\text{next})$は， 強化学習における最適行動価値$q_*(s,a)$に対応する．
+また$\mathbb{E}_{s_\text{next} \in \mathcal{T}(s,a)} v_*(s_\text{next})$は， $s$から$a$をとって遷移するafterstate $s'$の価値といえる．
 \begin{align}
-    v(s) =
+    v_*(s) =
     \begin{cases}
         0 & (s \text{が終了状態}) \\
-        \max_a \left(r(s,a) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s,a)} v(s_\text{next}) \right) & (\text{otherwise})
+        \max_a \left(r(s,a) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s,a)} v_*(s_\text{next}) \right) & (\text{otherwise})
     \end{cases}
     \label{eq:value}
 \end{align}
@@ -30,11 +32,11 @@
     \caption{式~\ref{eq:value}の補足図 \label{fig:state_afterstate}}
 \end{figure}
 
-ゲームに現れうるすべての状態の価値を計算すれば， 任意の状態において最善手を選ぶことができる．
+ゲームに現れうるすべての状態の最適価値を計算すれば， 任意の状態において最善手を選ぶことができる．
 本稿ではこれを2048の完全解析ということにする．
 
-完全解析をすることで， 最善手を選び続けるプレイヤの戦略やゲームの初期状態の価値を知りたい人は少なくないだろう．
-また2048を対象とした強化学習手法の良し悪しを定量的に評価することができる．
+完全解析をすることで， ゲームの初期状態の最適価値を明かすだけでなく， 最善手を選び続けるプレイヤの戦略を解析することができる．
+また2048を対象とした強化学習手法の良し悪しを定量的に評価し， より良い手法を提案することができると考えられる．
 一方で， 2048を完全解析することはそのゲーム木の大きさから現状難しいと考えられる．
 そこで以降では本来$4\times4$盤面上で行われる2048のミニゲームとして， 盤面サイズを縮小した2048を完全解析することを考える．
 
@@ -71,16 +73,17 @@
 \label{alg:bfs}
 \begin{algorithmic}[1]
 
-\Function {enumeration}{$t$}
-    \ForAll {$s_t \in \text{queue}_t$} 
-        \ForAll {$s_{t+2} \gets s_t$}
-            \State $\text{queue}_{t+2}.\text{push}(s_{t+2})$
+\Function {enumeration}{}
+    \For {$t=4$ to $t_{max}$}
+        \ForAll {$s_t \in \text{queue}_t$} 
+            \ForAll {$s_{t+2} \in \mathcal{T}(s_t)$}
+                \State $\text{queue}_{t+2}.\text{push}(s_{t+2})$
+            \EndFor
+            \ForAll {$s_{t+4} \in \mathcal{T}(s_t)$}
+                \State $\text{queue}_{t+4}.\text{push}(s_{t+4})$
+            \EndFor
         \EndFor
-        \If {$element > max$}
-            \State $max \gets element$
-        \EndIf
     \EndFor
-    \State \Return $max$
 \EndFunction
 
 \end{algorithmic}
@@ -91,6 +94,7 @@
 \ref{subsec:enumeration}節で列挙した状態の価値を式~\ref{eq:value}に従って計算する．
 時刻$t$の状態の価値は， 時刻$t+2$と$t+4$の状態の価値が計算済みであれば計算できる．
 よって時刻が最大の状態から順番に走査することで， 効率的にすべての状態の価値を計算できる．
+時刻$t$の
 
 \begin{algorithm}[tb]
     \caption{後退解析による価値計算}
@@ -98,6 +102,9 @@
     \begin{algorithmic}[1]
     
     \Function {calculation}{$t$}
+        \For {$t=t_{max}$ to $4$}
+            \State $v(s) = \max_a \left(r(s,a) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s,a)} v_*(s_\text{next}) \right)$
+        \EndFor
         \ForAll {$s_t \in \text{queue}_t$} 
             \ForAll {$s_{t+2} \gets s_t$}
                 \State $\text{queue}_{t+2}.\text{push}(s_{t+2})$
@@ -113,3 +120,4 @@
     \end{algorithm}
 
 \subsection{実験結果}
+$2\times2$盤面から$4\times3$盤面までの2048を完全解析した結果を表に示す．
