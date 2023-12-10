@@ -29,7 +29,8 @@ MDPは以下の$4$つの要素で構成される.
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth{}]{figures/MDP.pdf}
-  \caption{MDPの模式図 (文献\cite{Sutton1998}より引用) \label{fig:mdp}}
+  \caption{MDPの模式図 (文献\cite{Sutton1998}より引用)}
+  \label{fig:mdp}
 \end{figure}
 
 状態集合と行動集合が有限であるMDPを有限MDPと呼ぶ.
@@ -77,7 +78,8 @@ $\pi_*$に従うときの状態価値関数は最適状態価値関数と呼ば�
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth{}]{figures/backup.pdf}
-  \caption{最適価値関数のバックアップ図 (文献\cite{Sutton1998}より引用) \label{fig:backup}}
+  \caption{最適価値関数のバックアップ図 (文献\cite{Sutton1998}より引用)}
+  \label{fig:backup}
 \end{figure}
 
 \subsection{価値ベースな手法}
@@ -189,16 +191,16 @@ MCTSは選択， 展開， 評価， 逆伝播という$4$つのステップを�
 \section{2048への強化学習の応用}
 \ref{sec:rl_general}節では強化学習一般の概要について説明した．
 これを踏まえて本節では， 2048を対象とした強化学習研究の先行研究について概説する．
-\begin{align}
-  \label{eq:td_afterstate}
-  Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t)]
-\end{align}
-
 
 \subsection{TD afterstate学習}
-Szubertら~\cite{Szubert}はTD afterstate学習と呼ばれる価値ベースの学習手法を提案した．
-TD afterstate学習ではafterstateの価値
-N-tupleネットワークは2048の盤面特徴量の
+Szubertら~\cite{Szubert}はTD afterstate学習と呼ばれる価値ベースの強化学習手法を提案した．
+TD afterstate学習ではafterstateの価値を学習する．
+\begin{align}
+  \label{eq:td_afterstate}
+  V'(S_{t}^{'}) \leftarrow  V'(S_{t}^{'}) + \alpha [R_{t+1} + V'(S_{t+1}^{'}) - V'(S_{t}^{'})]
+\end{align}
+2048は状態数が大きいため， $V'$を表現するには関数近似を行う必要がある．
+Szubertらはオセロなどでも用いられているN-tupleネットワークを
 提案したTD afterstate学習は現在でも主流の手法の$1$つである．
 
 

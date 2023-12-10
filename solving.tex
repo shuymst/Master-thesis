@@ -29,7 +29,8 @@
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.6\linewidth{}]{figures/value_function_.pdf}
-    \caption{式~\ref{eq:value}の補足図 \label{fig:state_afterstate}}
+    \caption{式~\ref{eq:value}の補足図}
+    \label{fig:state_afterstate}
 \end{figure}
 
 ゲームに現れうるすべての状態の最適価値を計算すれば， 任意の状態において最善手を選ぶことができる．
@@ -72,7 +73,6 @@
 \caption{幅優先探索によるすべての状態の列挙}
 \label{alg:bfs}
 \begin{algorithmic}[1]
-
 \Function {enumeration}{}
     \For {$t=4$ to $t_{max}$}
         \ForAll {$s_t \in \text{queue}_t$} 
@@ -85,7 +85,6 @@
         \EndFor
     \EndFor
 \EndFunction
-
 \end{algorithmic}
 \end{algorithm}
 
@@ -94,13 +93,11 @@
 \ref{subsec:enumeration}節で列挙した状態の価値を式~\ref{eq:value}に従って計算する．
 時刻$t$の状態の価値は， 時刻$t+2$と$t+4$の状態の価値が計算済みであれば計算できる．
 よって時刻が最大の状態から順番に走査することで， 効率的にすべての状態の価値を計算できる．
-時刻$t$の
+疑似コードをAlgorithm~\ref{alg:calculation}に示す．
 
 \begin{algorithm}[tb]
-    \caption{後退解析による価値計算}
-    \label{alg:calculation}
     \begin{algorithmic}[1]
-    
+
     \Function {calculation}{$t$}
         \For {$t=t_{max}$ to $4$}
             \State $v(s) = \max_a \left(r(s,a) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s,a)} v_*(s_\text{next}) \right)$
@@ -115,9 +112,34 @@
         \EndFor
         \State \Return $max$
     \EndFunction
-    
     \end{algorithmic}
-    \end{algorithm}
+    \caption{後退解析による価値計算}
+    \label{alg:calculation}
+\end{algorithm}
 
 \subsection{実験結果}
-$2\times2$盤面から$4\times3$盤面までの2048を完全解析した結果を表に示す．
+$2\times2$盤面から$4\times3$盤面までの2048を完全解析した結果を表~\ref{table: analysis_table}に示す．
+\begin{table}[t]
+    \centering
+    \begin{tabular}{rrr}
+        \hline \hline
+        盤面サイズ & 状態数 & 初期状態の価値\\ \hline
+        $2\times2=4$ & $110$ & $67.6$ \\
+        $3\times2=6$ & $21,752$ & $480.9$ \\
+        $4\times2=8$ & $4,980,767$ & $2,642.6$ \\
+        $3\times3=9$ & $48,713,519$ & $5,469.2$ \\
+        $4\times3=12$ & $1,152,817,492,752$ & $50,724.2$ \\
+        \hline
+    \end{tabular}
+    \caption{盤面の大きさと解析結果に関する表}
+    \label{table: analysis_table}
+\end{table}
+
+参考として， $2\times2$盤面の2048のゲーム木全体を図~\ref{fig:game_tree}に示す．
+オレンジ色のノードは初期状態， 青色のノードは終了状態を表している．
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.7\linewidth{}]{figures/tree.pdf}
+    \caption{$2\times2$盤面の2048のゲーム木}
+    \label{fig:game_tree}
+\end{figure}
