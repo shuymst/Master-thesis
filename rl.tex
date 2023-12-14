@@ -105,6 +105,8 @@ DQNの発表以降， 様々な工夫が提案され続けている．
 詳細は文献~\cite{deepRL}の$4$節などを参照されたい．
 
 \subsection{方策ベースな手法}
+方策を直接パラメタライズされた関数で近似し， 目的関数との誤差を最小化するように勾配を
+
 
 \section{AlphaZero}
 Silverらが提案したAlphaZero~\cite{AlphaZero}は， 二人ゼロ和完全確定情報ゲームを対象とした有力な深層強化学習手法である．
@@ -195,6 +197,7 @@ AlphaZeroは人間の棋譜ではなく， 自己対戦によって得た学習�
 
 
 \subsection{AlphaZeroの評価とMuZero}
+\label{subsec: muzero}
 囲碁， 将棋， チェスにおいて当時の有力なプログラムを上回る強さを示して注目を集めた．
 AlphaZeroが行うMCTSは， ゲームのルールや環境のダイナミクスが既知であることを前提としている．
 すなわち現在の状態$s_t$から行動$a_t$を選択した後の状態$s_{t+1}$を， $s_t$のみ観測可能な状況から知ることができる必要がある．
@@ -207,17 +210,26 @@ Schrittwieserらが提案したMuZero~\cite{MuZero}は， ニューラルネッ�
 
 \subsection{TD afterstate学習}
 Szubertら~\cite{Szubert}はTD afterstate学習と呼ばれる価値ベースの強化学習手法を提案した．
-TD afterstate学習ではafterstateの価値を学習する．
+2048はゲームの性質上， 状態$s$から行動$a$をとって獲得する得点$r(s,a)$と遷移するafterstate $s'$は決定的である．
+よってafterstate $s'$の最適価値を$v_*'(s')$と表すと， 行動価値$q_*(s,a)$は$q_*(s,a) = r(s,a) + v_*'(s')$と分解できる．
+そこでTD afterstate学習は， Q値ではなくafterstateの価値$v_*'$の推定値$V'$を式~\ref{eq:td_afterstate}に従って更新する．
 \begin{align}
   \label{eq:td_afterstate}
   V'(S_{t}^{'}) \leftarrow  V'(S_{t}^{'}) + \alpha [R_{t+1} + V'(S_{t+1}^{'}) - V'(S_{t}^{'})]
 \end{align}
-2048は状態数が大きいため， $V'$を表現するには関数近似を行う必要がある．
-Szubertらはオセロなどでも用いられているN-tupleネットワークを
-提案したTD afterstate学習は現在でも主流の手法の$1$つである．
+式~\ref{eq:td_afterstate}はQ学習の更新式~\ref{eq:q_learning}において， $Q(S_t, A_t) = R(S_t, A_t) + V'(S_{t}^{'})$として書き直したものと見ることができる．
 
+SzubertらはN-tupleネットワークというヒューリスティックな盤面評価関数を用いて$V'$を表現し， $2048$のタイルを$98$\%の確率で到達させることに成功した．
+Jaskowski~\cite{DBLP:journals/corr/Jaskowski16}はこれに様々な工夫を加えた学習方法を提案し， 最終的にexpectimax探索を$1$手$1$秒の制限で行うことで平均$609,104$点を獲得するプレイヤを開発した．
+松崎~\cite{KiminoriMatsuzaki2021}はニューラルネットワークによって表現した$V'$を学習させ， $3$-ply expectimax探索を行うことで平均$406,927$点を達成した．
+
+Szubertらは文献~\cite{Szubert}でN-tupleネットワークを用いたQ学習の実験も行ったが， TD afterstate学習の性能を大きく下回る結果になったことを報告している．
+TD afterstate学習は$s$からafterstate $s'$への遷移までをシミュレートする， いわば$0.5$手読みの探索を行っているため， $0$手読みのQ学習を上回ると考えられる．
 
 \subsection{Afterstate PPO}
+価値ベースな手法であるTD afterstate学習が一方で方策ベースな強化学習手法で2048を
+山下ら~\cite{afterstate_ppo}は
 
 \subsection{Stochastic MuZero}
-Stochastic MuZero~\cite{StochasticMuZero}は， 
+Antonoglouらが提案したStochastic MuZero~\cite{StochasticMuZero}は， 2048において．
+Stochastic MuZeroは~\ref{subsec: muzero}節で述べたMuZeroを， 確率的な環境にも対応できるように拡張した手法である．
