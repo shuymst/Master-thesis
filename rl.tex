@@ -224,12 +224,12 @@ Jaskowski~\cite{DBLP:journals/corr/Jaskowski16}はこれに様々な工夫を加
 松崎~\cite{KiminoriMatsuzaki2021}はニューラルネットワークによって表現した$V'$を学習させ， $3$-ply expectimax探索を行うことで平均$406,927$点を達成した．
 
 Szubertらは文献~\cite{Szubert}でN-tupleネットワークを用いたQ学習の実験も行ったが， TD afterstate学習の性能を大きく下回る結果になったことを報告している．
-TD afterstate学習は$s$からafterstate $s'$への遷移までをシミュレートする， いわば$0.5$手読みの探索を行っているため， $0$手読みのQ学習を上回ると考えられる．
+TD afterstate学習は観測している状態$s$からafterstate $s'$への遷移までをシミュレートする， いわば$0.5$手読みの探索を行っているため， $0$手読みのQ学習を上回ると考えられる．
 
 \subsection{Afterstate PPO}
 価値ベースな手法であるTD afterstate学習が一方で方策ベースな強化学習手法で2048を
 山下ら~\cite{afterstate_ppo}は
 
 \subsection{Stochastic MuZero}
-Antonoglouらが提案したStochastic MuZero~\cite{StochasticMuZero}は， 2048において．
-Stochastic MuZeroは~\ref{subsec: muzero}節で述べたMuZeroを， 確率的な環境にも対応できるように拡張した手法である．
+Antonoglouらが提案したStochastic MuZero~\cite{StochasticMuZero}は~\ref{subsec: muzero}節で述べたMuZeroを， 確率的な環境にも対応できるように拡張した手法である．
+Stochastic MuZeroは\textit{decisionノード}と\textit{chanceノード}

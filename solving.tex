@@ -37,10 +37,10 @@
 ゲームに現れうるすべての状態の最適価値を計算すれば， 任意の状態において最善手を選ぶことができる．
 本稿ではこれを2048の完全解析ということにする．
 
-完全解析をすることで， ゲームの初期状態の最適価値を明かすだけでなく， 最善手を選び続けるプレイヤの戦略を解析することができる．
-また2048を対象とした強化学習手法の良し悪しを定量的に評価し， より良い手法を提案することができると考えられる．
-一方で， 2048を完全解析することはそのゲーム木の大きさから現状難しいと考えられる．
-そこで以降では本来$4\times4$盤面上で行われる2048のミニゲームとして， 盤面サイズを縮小した2048を完全解析することを考える．
+完全解析をすることで， ゲームの任意の状態の最適価値・最善手を明かし， 最善手を選び続けるプレイヤの戦略を解析することができる．
+さらに2048を対象とした強化学習手法の良し悪しを定量的に評価し， より良い手法を提案することができると考えられる．
+一方で2048を完全解析することは， そのゲーム木の大きさによる計算コストの観点から現状難しいと考えられる．
+そこで本来$4\times4$盤面上で行われる2048のミニゲームとして， 盤面サイズを縮小した2048を完全解析することを考える．
 
 \subsection{盤面サイズが小さな2048の完全解析}
 \label{sec:mini2048}
@@ -135,12 +135,46 @@ $2\times2$盤面から$4\times3$盤面までの2048を完全解析した結果�
     \caption{盤面の大きさと解析結果に関する表}
     \label{table: analysis_table}
 \end{table}
+盤面サイズが大きくなるに従って指数関数的に状態数は大きくなることが分かる．
+また初期状態の価値は， 盤面サイズが$n$マス増える度に$2^n \sim 2^{n+1}$倍になっていることが分かる．
+そのため$4\times4$盤面の2048は完全解析を行うには状態数が非常に大きく， 初期状態の価値は約$800,000$点程度ではないかと予想される．
+
+$3\times3$盤面と$4\times3$盤面の2048の各時刻における状態数のグラフを図~\ref{fig:state_afterstate}に示す．
+多くのゲームでは進行に従って多様な盤面が存在するため状態数は大きくなり続ける．
+一方で2048は盤面が数字タイルで埋まるとゲームオーバーになりやすく， その時刻の状態数は少なくなる．
+大きな数字タイルを完成させると盤面上に空きマスが増え， ゲームは再び複雑性を増す．
+実際， 図~\ref{fig:state_afterstate}からは$2^n$の前後の時刻で状態数が大きく増減していることが見て取れる．
+よって2048はゲームの進行に従って， ゲームの複雑性が増減するという特徴を持つ．
+このため任意の時刻における状態数は一定の上限で抑えられ， ~\ref{subsec:enumeration}節と~\ref{subsec:calculation}節で説明した完全解析を実行できる．
+\begin{figure}
+\vspace{0.2cm}
+\begin{subfigure}[T]{0.3\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/graph_mini_.pdf}
+    \caption{$3\times3$盤面の2048}
+    \label{fig:graph_mini}
+\end{subfigure}
+\begin{subfigure}[T]{0.3\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/graph_mid_.pdf}
+    \caption{$4\times3$盤面の2048}
+    \label{fig:graph_mid}
+\end{subfigure}
+\begin{subfigure}[T]{0.3\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/graph_compare_mid_mini_.pdf}
+    \caption{$3\times3$盤面と$4\times3$盤面の状態数の比較}
+    \label{fig:graph_compare_mid_mini_}
+\end{subfigure}
+\caption{時刻と状態数のグラフ}
+\label{fig:time_state_num}
+\end{figure}
 
 参考として， $2\times2$盤面の2048のゲーム木全体を図~\ref{fig:game_tree}に示す．
-オレンジ色のノードは初期状態， 青色のノードは終了状態を表している．
+ゲーム木が増大と縮小を繰り返す様子が見て取れる．
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.7\linewidth{}]{figures/tree.pdf}
-    \caption{$2\times2$盤面の2048のゲーム木}
+    \caption{$2\times2$盤面の2048のゲーム木~(赤色のノードは初期状態， 青色のノードは終了状態)}
     \label{fig:game_tree}
 \end{figure}
