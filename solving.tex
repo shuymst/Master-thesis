@@ -2,7 +2,8 @@
 \label{chap:solving}
 \ref{chap:rl}章で述べた強化学習は環境~(ゲーム)~と何度もやり取りすることで， 最適な方策を学習するための手法である．
 一方で小さなゲームであれば， 力ずくの計算によってゲームを完全に解くこともできる．
-本章では2048を解析的なアプローチによって解くことについて考察する．
+本節では2048を解析的なアプローチによって解くことについて述べる．
+なお本節の内容は文献~\cite{3x3_2048}および文献~\cite{4x3_2048}を元に執筆された．
 
 \subsection{2048の完全解析とは}
 \label{sec:solving}
@@ -53,7 +54,6 @@
 \end{enumerate}
 
 \ref{subsec:enumeration}節と~\ref{subsec:calculation}節で具体的な方法について述べる．
-なお本節の内容は文献~\cite{3x3_2048}および文献~\cite{4x3_2048}を元に執筆された．
 
 \subsubsection{幅優先探索によるすべての状態の列挙}
 \label{subsec:enumeration}
@@ -148,25 +148,19 @@ $3\times3$盤面と$4\times3$盤面の2048の各時刻における状態数の�
 このため任意の時刻における状態数は一定の上限で抑えられ， ~\ref{subsec:enumeration}節と~\ref{subsec:calculation}節で説明した完全解析を実行できる．
 \begin{figure}
 \vspace{0.2cm}
-\begin{subfigure}[T]{0.3\columnwidth}
+\begin{subfigure}[T]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\columnwidth]{figures/graph_mini_.pdf}
+    \includegraphics[width=\columnwidth]{figures/graph_mini.pdf}
     \caption{$3\times3$盤面の2048}
     \label{fig:graph_mini}
 \end{subfigure}
-\begin{subfigure}[T]{0.3\columnwidth}
+\hspace{1cm}
+\begin{subfigure}[T]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\columnwidth]{figures/graph_mid_.pdf}
+    \includegraphics[width=\columnwidth]{figures/graph_mid.pdf}
     \caption{$4\times3$盤面の2048}
     \label{fig:graph_mid}
 \end{subfigure}
-\begin{subfigure}[T]{0.3\columnwidth}
-    \centering
-    \includegraphics[width=\columnwidth]{figures/graph_compare_mid_mini_.pdf}
-    \caption{$3\times3$盤面と$4\times3$盤面の状態数の比較}
-    \label{fig:graph_compare_mid_mini_}
-\end{subfigure}
-\caption{時刻と状態数のグラフ}
 \label{fig:time_state_num}
 \end{figure}
 
