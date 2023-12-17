@@ -39,7 +39,7 @@
 本稿ではこれを2048の完全解析ということにする．
 
 完全解析をすることで， ゲームの任意の状態の最適価値・最善手を明かし， 最善手を選び続けるプレイヤの戦略を解析することができる．
-さらに2048を対象とした強化学習手法の良し悪しを定量的に評価し， より良い手法を提案することができると考えられる．
+さらに2048を対象とした強化学習手法の良し悪しを定量的に評価するできると考えられる．
 一方で2048を完全解析することは， そのゲーム木の大きさによる計算コストの観点から現状難しいと考えられる．
 そこで本来$4\times4$盤面上で行われる2048のミニゲームとして， 盤面サイズを縮小した2048を完全解析することを考える．
 
@@ -53,14 +53,11 @@
     \item 列挙した状態の価値の計算
 \end{enumerate}
 
-\ref{subsec:enumeration}節と~\ref{subsec:calculation}節で具体的な方法について述べる．
-
 \subsubsection{幅優先探索によるすべての状態の列挙}
 \label{subsec:enumeration}
-完全解析の第1ステップとして幅優先探索によってゲームに現れうるすべての状態を列挙する．
-まず初期状態をキューに詰めて探索を開始する．
-キューの先頭の状態$s$を取り出し， $s$から遷移可能な次の状態$s_{\text{next}} \in \mathcal{T}(s)$をキューに追加する．
-これをキューが空になるまで繰り返すことで， すべての状態を列挙することができる．
+完全解析の第1ステップとしてゲームに現れうるすべての状態を列挙する．
+発見した状態$S$から状態を$1$つ取り出し， $s$から遷移可能な次の状態$s_{\text{next}} \in \mathcal{T}(s)$を$S$に追加する．
+初期状態を$S$に入れて列挙を開始し， 新たに発見する状態がなくなるまで繰り返すことで， すべての状態を列挙することができる．
 
 ここで$s_{\text{next}} \in \mathcal{T}(s)$がすでに発見済みであるか確認するために， これまでに発見した状態を管理する集合が必要である．
 素朴な方法ではメモリでこれまでに発見した全状態を管理することで行えるが， 状態数が非常に大きな場合にはメモリの容量を超えてしまう．
@@ -75,13 +72,18 @@
 \label{alg:bfs}
 \begin{algorithmic}[1]
 \Function {enumeration}{}
-    \For {$t=4$ to $t_{max}$}
-        \ForAll {$s_t \in \text{queue}_t$} 
+    \State INITIALIZE($S_4, S_6, S_8$)
+    \For {$t=4$ to $t_{\text{max}}$}
+        \ForAll {$s_t \in S_t$} 
             \ForAll {$s_{t+2} \in \mathcal{T}(s_t)$}
-                \State $\text{queue}_{t+2}.\text{push}(s_{t+2})$
+                \If {$s_{t+2} \notin S_{t+2}$} 
+                    \State $S_{t+2} = S_{t+2} \cup \{s_{t+2}\}$
+                \EndIf
             \EndFor
             \ForAll {$s_{t+4} \in \mathcal{T}(s_t)$}
-                \State $\text{queue}_{t+4}.\text{push}(s_{t+4})$
+                \If {$s_{t+4} \notin S_{t+4}$} 
+                    \State $S_{t+4} = S_{t+4} \cup \{s_{t+4}\}$
+                \EndIf
             \EndFor
         \EndFor
     \EndFor
@@ -92,26 +94,21 @@
 \subsubsection{後退解析による状態の価値の計算}
 \label{subsec:calculation}
 \ref{subsec:enumeration}節で列挙した状態の価値を式~\ref{eq:value}に従って計算する．
-時刻$t$の状態の価値は， 時刻$t+2$と$t+4$の状態の価値が計算済みであれば計算できる．
+時刻$t$の状態の価値は， 時刻$t+2$と$t+4$の状態の価値が計算済みであれば必ず計算できる．
 よって時刻が最大の状態から順番に走査することで， 効率的にすべての状態の価値を計算できる．
 疑似コードをAlgorithm~\ref{alg:calculation}に示す．
-
 \begin{algorithm}[tb]
     \begin{algorithmic}[1]
-
     \Function {calculation}{$t$}
-        \For {$t=t_{max}$ to $4$}
-            \State $v(s) = \max_a \left(r(s,a) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s,a)} v_*(s_\text{next}) \right)$
-        \EndFor
-        \ForAll {$s_t \in \text{queue}_t$} 
-            \ForAll {$s_{t+2} \gets s_t$}
-                \State $\text{queue}_{t+2}.\text{push}(s_{t+2})$
+        \For {$t=t_{\text{max}}$ to $4$}
+            \ForAll {$s_t \in S_t$} 
+                \If {$s_t$ is gameover}
+                    \State $v(s_t) = 0$
+                \Else {}
+                    \State $v(s_t) = \max_a \left(r(s_t,a) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s_t,a)} v(s_\text{next}) \right)$
+                \EndIf
             \EndFor
-            \If {$element > max$}
-                \State $max \gets element$
-            \EndIf
         \EndFor
-        \State \Return $max$
     \EndFunction
     \end{algorithmic}
     \caption{後退解析による価値計算}
