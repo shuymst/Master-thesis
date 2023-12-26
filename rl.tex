@@ -105,12 +105,16 @@ DQNの発表以降， 様々な工夫が提案され続けている．
 詳細は文献~\cite{deepRL}の$4$節などを参照されたい．
 
 \subsection{方策ベースな手法}
-方策を直接パラメタライズされた関数で近似し， 目的関数との誤差を最小化するように勾配を
+方策を直接パラメタライズされた関数で近似し， 目的関数との誤差を最小化するようにパラメータを学習する手法を全般に方策ベースな手法と呼ぶ．
+方策ベースな手法においても価値関数の学習を行うことはあるが， あくまで良い方策のパラメータを学習するために必要とするもので， 直接的な行動の選択には関与しない．
 
+方策のパラメータを$\theta$として目的関数を$J(\theta)$とする．
+$J(\theta)=v_{\theta}(s_0)$
+方策ベースな深層強化学習手法としては， Schulmanらが提案したProximal Policy Optimization~(PPO)~\cite{PPO}が有名である．
 
-\section{AlphaZero}
-Silverらが提案したAlphaZero~\cite{AlphaZero}は， 二人ゼロ和完全確定情報ゲームを対象とした有力な深層強化学習手法である．
-AlphaZeroは盤面の特徴量を入力として方策と価値を出力するニューラルネットワークを， 自己対戦を通して得たデータから学習する．
+\section{AlphaZeroとMuZero}
+Silverらが提案したAlphaZero~\cite{AlphaZero}は， 囲碁やチェスなどの二人零和完全確定情報ゲームを対象とした有力な深層強化学習手法である．
+AlphaZeroは盤面の特徴量を入力として， その盤面における方策と価値を出力するニューラルネットワークを， 自己対戦を通して得たデータから学習する．
 自己対戦において， AlphaZeroはモンテカルロ木探索~(MCTS)~というアルゴリズムを使用して指し手を選択する．
 
 \subsection{モンテカルロ木探索}
@@ -194,7 +198,12 @@ $\tau$は温度パラメータと呼ばれ， $0$に近づくほど訪問回数�
 \subsection{自己対戦とニューラルネットワークの学習}
 AlphaZeroは人間の棋譜ではなく， 自己対戦によって得た学習データを使ってニューラルネットワークを訓練する．
 自己対戦は， 
-
+各訪問回数を正規化した$\pmb{\pi}$
+すなわち式~\ref{eq:az_loss}で表される誤差関数$l$を最小化するようにパラメータを更新する．
+\begin{align}
+\label{eq:az_loss}
+l = (z-v)^2 - \pmb{\pi}^{\mathrm{T}} \log \mathbf{p}
+\end{align}
 
 \subsection{AlphaZeroの評価とMuZero}
 \label{subsec: muzero}
@@ -205,10 +214,12 @@ AlphaZeroが行うMCTSは， ゲームのルールや環境のダイナミクス
 Schrittwieserらが提案したMuZero~\cite{MuZero}は， ニューラルネットワークで環境のダイナミクスをモデル化し， 学習することを提案した．
 
 \section{2048への強化学習の応用}
+\label{sec:rlto2048}
 \ref{sec:rl_general}節では強化学習一般の概要について説明した．
 これを踏まえて本節では， 2048を対象とした強化学習研究の先行研究について概説する．
 
 \subsection{TD afterstate学習}
+\label{subsec: td_afterstate}
 Szubertら~\cite{Szubert}はTD afterstate学習と呼ばれる価値ベースの強化学習手法を提案した．
 2048はゲームの性質上， 状態$s$から行動$a$をとって獲得する得点$r(s,a)$と遷移するafterstate $s'$は決定的である．
 よってafterstate $s'$の最適価値を$v_*'(s')$と表すと， 行動価値$q_*(s,a)$は$q_*(s,a) = r(s,a) + v_*'(s')$と分解できる．
@@ -224,7 +235,7 @@ Jaskowski~\cite{DBLP:journals/corr/Jaskowski16}はこれに様々な工夫を加
 松崎~\cite{KiminoriMatsuzaki2021}はニューラルネットワークによって表現した$V'$を学習させ， $3$-ply expectimax探索を行うことで平均$406,927$点を達成した．
 
 Szubertらは文献~\cite{Szubert}でN-tupleネットワークを用いたQ学習の実験も行ったが， TD afterstate学習の性能を大きく下回る結果になったことを報告している．
-TD afterstate学習は観測している状態$s$からafterstate $s'$への遷移までをシミュレートする， いわば$0.5$手読みの探索を行っているため， $0$手読みのQ学習を上回ると考えられる．
+TD afterstate学習は観測している状態$s$からafterstate $s'$への遷移までをシミュレートする， いわば$0.5$手読みの探索を行っているため， $0$手読みのQ学習と比べて学習しやすいと考えられる．
 
 \subsection{Afterstate PPO}
 価値ベースな手法であるTD afterstate学習が一方で方策ベースな強化学習手法で2048を
@@ -232,6 +243,39 @@ TD afterstate学習は観測している状態$s$からafterstate $s'$への遷�
 
 \subsection{Stochastic MuZero}
 Antonoglouらが提案したStochastic MuZero~\cite{StochasticMuZero}は~\ref{subsec: muzero}節で述べたMuZeroを， 確率的な環境にも対応できるように拡張した手法である．
-Stochastic MuZeroは\textit{decisionノード}と\textit{chanceノード}
+Stochastic MuZeroは確率的ゲームである2048とバックギャモンでMuZeroを大きく上回るパフォーマンスを発揮した．
+さらにランダム性のない囲碁においてもMuZeroと同等のレーティングを達成し， 対象とするドメインが幅広いことを示した．
+
+2048においては， \ref{subsec: td_afterstate}節で述べたTD afterstate学習の先行研究~\cite{DBLP:journals/corr/Jaskowski16}と比較して， 一切のドメイン知識を必要とせず， より優れたパフォーマンスを出したことが強調された．
+一方で， 論文内で示されたStochastic MuZeroの最終的な平均スコアは約$50$万点で， expectimax探索を行うことで平均$609,104$点を達成した文献~\cite{DBLP:journals/corr/Jaskowski16}の結果を明確に上回るとはいえない．
+以下では具体的に2048へ適用することを想定した手法の説明を行う．
+
+Stochastic MuZeroは以下の$5$つのニューラルネットワークを学習する．
+\begin{itemize}
+  \item \textit{Representation}ネットワーク $h$
+  \item \textit{Prediction}ネットワーク $f$
+  \item \textit{Afterstate Dynamics}ネットワーク $\phi$
+  \item \textit{Afterstate Prediction}ネットワーク $\psi$
+  \item \textit{Dynamics}ネットワーク $g$
+\end{itemize}
+
+まずStochastic MuZeroは\textit{decisionノード}と\textit{chanceノード}という2種類のノードから成る探索木を用いてMCTSを行う．
+decisionノードはプレイやが行動を選択する状態に対応し， chanceノードはafterstateに対応する．
+decisionノードからchanceノードへの遷移は決定的で， chanceノード
+これは$1$回の確率的な遷移を， 決定的な部分~(decisionノード)~と確率的な部分~(chanceノード)~に分けているといえる．
+2048においてdecisionノードはプレイやが行動を選択する状態に対応し， chanceノードはafterstateに対応している．
+
+\begin{table}[t]
+  \centering
+  \begin{tabular}{clll}
+   \hline
+   手法 & 対象ドメイン & 測定方法 & 測定結果 \\
+   \hline \hline
+   AlphaZero & 二人零和有限完全確定情報ゲーム & 二人が離れてランプの光を見る & (音速10倍以上) \\
+   MuZero & 二人零和有限完全確定情報ゲーム + Atari & 木星の衛星の観測から & 2 \\
+   Stochastic MuZero & Bradley & 星の収差から & 3.01 \\
+   \hline
+  \end{tabular}
+\end{table}
 
 \subsection{先行研究の考察}
