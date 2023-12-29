@@ -45,11 +45,11 @@ episodic taskではエージェントと環境のやり取りを初期状態か�
 エージェントがある状態において行動を決定する際の戦略， すなわち確率分布$\pi:S \times A \rightarrow [0,1]$を方策と呼ぶ．
 状態価値関数$v_{\pi}(s)$は状態$s$から方策$\pi$に従って行動を選択し続けた場合の累積報酬和の期待値であり， 次のように定義される．
 \begin{align}
-  v_{\pi}(s) \stackrel{\mathrm{def}}{=} \mathbb{E}_{\pi}\left[\sum_{k=0}^T \gamma^k R_{t+k+1}|S_t=s \right]
+  v_{\pi}(s) \stackrel{\mathrm{def}}{=} \mathbb{E}_{\pi}\left[\sum_{k=0}^T R_{t+k+1}|S_t=s \right]
 \end{align}
 同様に状態$s$から行動$a$を選択し， その後方策$\pi$に従って行動を選択し続けた場合の累積報酬和の期待値である行動価値関数$q_{\pi}(s,a)$の定義は以下のようになる．
 \begin{align}
-  q_{\pi}(s,a) \stackrel{\mathrm{def}}{=} \mathbb{E}_{\pi}\left[\sum_{k=0}^T \gamma^k R_{t+k+1}|S_t=s, A_t=a \right]
+  q_{\pi}(s,a) \stackrel{\mathrm{def}}{=} \mathbb{E}_{\pi}\left[\sum_{k=0}^T R_{t+k+1}|S_t=s, A_t=a \right]
 \end{align}
 
 強化学習の目標は多くの報酬を獲得できるような良い方策を見つけることである．
@@ -69,10 +69,10 @@ $\pi_*$に従うときの状態価値関数は最適状態価値関数と呼ば�
 \begin{align}
   v_*(s) &= \max_{a \in A(s)} q_*(s, a) \\
   \label{eq:bellman_v_opt}
-               &= \max_{a \in A(s)} \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a] \\
-  q_*(s, a) &= \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a] \\
+               &= \max_{a \in A(s)} \mathbb{E}[R_{t+1} + v_*(S_{t+1}) | S_t=s, A_t=a] \\
+  q_*(s, a) &= \mathbb{E}[R_{t+1} + v_*(S_{t+1}) | S_t=s, A_t=a] \\
   \label{eq:bellman_q_opt}
-                  &= \mathbb{E}[R_{t+1} + \gamma \max_{a'} q_*(S_{t+1}, a') | S_t=s, A_t=a]
+                  &= \mathbb{E}[R_{t+1} + \max_{a'} q_*(S_{t+1}, a') | S_t=s, A_t=a]
 \end{align}
 式~\ref{eq:bellman_v_opt}， \ref{eq:bellman_q_opt}はベルマン最適方程式と呼ばれる．
 \begin{figure}[h]
@@ -83,7 +83,7 @@ $\pi_*$に従うときの状態価値関数は最適状態価値関数と呼ば�
 \end{figure}
 
 \subsection{価値ベースな手法}
-状態$s$における最適方策に従った具体的な行動は$\argmax \mathbb{E}[R_{t+1} + \gamma v_*(S_{t+1}) | S_t=s, A_t=a]$と， $1$ステップ先の状態を探索してそれらの最適状態価値関数を参照することで計算できる．
+状態$s$における最適方策に従った具体的な行動は$\argmax \mathbb{E}[R_{t+1} + v_*(S_{t+1}) | S_t=s, A_t=a]$と， $1$ステップ先の状態を探索してそれらの最適状態価値関数を参照することで計算できる．
 最適行動価値関数が参照できれば， $1$ステップ先の状態を探索する必要すらなく， 単に$\argmax q_*(s, a)$を選択すればよい．
 最適方策を得るために価値関数を学習する手法は価値ベースな手法と呼ばれる．
 
@@ -92,9 +92,9 @@ Q学習は最も基本的な価値ベースな手法の$1$つで， 最適行動
 このときQ学習は以下の更新式~\ref{eq:q_learning}に従って$Q(S_t, A_t)$を更新する．
 \begin{align}
   \label{eq:q_learning}
-  Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t)] 
+  Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \max_a Q(S_{t+1}, a) - Q(S_t, A_t)] 
 \end{align}
-式~\ref{eq:q_learning}は現在の推定値$Q(S_t, A_t)$を， ベルマン最適方程式~\ref{eq:bellman_q_opt}の右辺の推定値である$R_{t+1} + \gamma \max_a Q(S_{t+1}, a)$に近づけていると解釈できる．
+式~\ref{eq:q_learning}は現在の推定値$Q(S_t, A_t)$を， ベルマン最適方程式~\ref{eq:bellman_q_opt}の右辺の推定値である$R_{t+1} + \max_a Q(S_{t+1}, a)$に近づけていると解釈できる．
 任意の$(s, a) \in \mathcal{S} \times \mathcal{A}$について$Q(s,a)$が更新され続けるという条件の下で， Q学習は収束が保証されている．
 
 状態集合や行動集合が大きい場合や有限でない場合には， テーブル形式でQ値を保持することができないため何らかの関数近似を行う必要がある．
@@ -105,12 +105,43 @@ DQNの発表以降， 様々な工夫が提案され続けている．
 詳細は文献~\cite{deepRL}の$4$節などを参照されたい．
 
 \subsection{方策ベースな手法}
-方策を直接パラメタライズされた関数で近似し， 目的関数との誤差を最小化するようにパラメータを学習する手法を全般に方策ベースな手法と呼ぶ．
-方策ベースな手法においても価値関数の学習を行うことはあるが， あくまで良い方策のパラメータを学習するために必要とするもので， 直接的な行動の選択には関与しない．
+方策を直接パラメタライズされた関数で近似し， パラメータを学習する手法を全般に方策ベースな手法と呼ぶ．
+なお方策ベースな手法においても価値関数の学習を行うことはあるが， 良い方策のパラメータを学習するために必要とするものであり， 直接的な行動の選択には関与しない．
 
-方策のパラメータを$\theta$として目的関数を$J(\theta)$とする．
-$J(\theta)=v_{\theta}(s_0)$
-方策ベースな深層強化学習手法としては， Schulmanらが提案したProximal Policy Optimization~(PPO)~\cite{PPO}が有名である．
+方策のパラメータ$\pmb{\theta}$は目的関数$J(\pmb{\theta})$を最大化するように更新される．
+$J(\pmb{\theta})$は， 方策$\pi_{\pmb{\theta}}$に従ったときの初期状態$s_0$の価値$v_{\pi_{\pmb{\theta}}}(s_0)$と定義することができる．
+このとき方策$\pi$のもとで状態$s$を訪れる確率を$\mu(s)$とすると， $\nabla J(\pmb{\theta})$は以下の方策勾配定理によって求めることができる．
+\begin{align}
+  \label{eq: policy_gradient_theorem}
+  \nabla J(\pmb{\theta}) \propto \sum_s \mu(s) \sum_a q_{\pi}(s,a) \nabla \pi(a|s, \pmb{\theta})
+\end{align}
+さらに以下のように変形する．
+\begin{align}
+  \nabla J(\pmb{\theta}) &\propto \sum_s \mu(s) \sum_a q_{\pi}(s,a) \nabla \pi(a|s, \pmb{\theta}) \notag \\
+  & = \mathbb{E}_{\pi} \left[\sum_a q_\pi(S_t, a) \nabla \pi(a|S_t, \pmb{\theta})\right] \notag \\
+  & = \mathbb{E}_{\pi} \left[\sum_a \pi(a|S_t, \pmb{\theta}) q_\pi(S_t, a) \frac{\nabla \pi(a|S_t, \pmb{\theta})}{\pi(a|S_t, \pmb{\theta})}\right] \notag \\
+  & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) \frac{\nabla \pi(A_t|S_t, \pmb{\theta})}{\pi(A_t|S_t,\pmb{\theta})}\right] \notag \\
+  & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) \nabla \ln \pi(A_t|S_t, \pmb{\theta}) \right] \notag 
+\end{align}
+よって学習率を$\alpha$とすると， パラメータ$\pmb{\theta}$の更新式が導かれる．
+\begin{align}
+  \label{eq:reinforce}
+  \pmb{\theta}_{t+1} \leftarrow \pmb{\theta}_{t} + \alpha \left[q_\pi(S_t,A_t) \nabla \ln \pi(A_t|S_t, \pmb{\theta}) \right]
+\end{align}
+ただし未知の値$q_\pi(S_t,A_t)$を， 学習データから推定する必要がある．
+Williams~\cite{Williams:92}は$q_\pi(S_t,A_t)$の推定値として， $S_t$から$A_t$を選択して実際に獲得した報酬の総和$G_t = \Sigma_{k=0}^{T} R_{t+k+1}$を用いることを提案した．
+$G_t$は$q_\pi(S_t,A_t)$の不偏推定量としての性質をみたす一方で， 分散が大きく学習が安定しない．
+
+そこで価値関数$v_\pi$の推定値$V$を用いる．
+さらに$G_t = \Sigma_{k=0}^{T} R_{t+k+1}$を$\Sigma_{k=0}^{n-1} R_{t+k+1} + V(S_{t+n})$によって推定する．
+
+
+
+このように学習した価値関数をactor-criticな手法と呼ばれる．
+
+Mnihら~\cite{A3C}が提案したasynchronous advantage actor-critic~(A3C)~は， 方策関数と価値関数をニューラルネットワークにより近似したactor-criticな手法で， Atariや物理シミュレーションの実験で高い成果を収めた．
+A3Cの発表以降， 方策ベースな深層強化学習の研究は数多くなされている．
+特にSchulmanらが提案したProximal Policy Optimization~(PPO)~\cite{PPO}は有名手法の$1$つである．
 
 \section{AlphaZeroとMuZero}
 Silverらが提案したAlphaZero~\cite{AlphaZero}は， 囲碁やチェスなどの二人零和完全確定情報ゲームを対象とした有力な深層強化学習手法である．

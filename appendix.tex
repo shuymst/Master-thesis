@@ -24,6 +24,11 @@ $n$番目のチャネルの$(i,j)$成分には盤面の$(i,j)$
     \label{fig:input_encoding}
 \end{figure}
 
+\subsection{AlphaZeroの実装}
+ニューラルネットワークは入力に対する方策と価値を出力する．
+方策は上下左右それぞれの方向を選択する確率を表す$4$次元のベクトル値である．
+価値は
+
 \subsection{Prioritized Experience Replayの詳細}
 Prioritized Experience Replay~\cite{prioritized}は学習に使用するデータをランダムではなく， ある重みに従ってサンプルする手法である．
 この重みをpriorityと呼び， $i$番目のデータのpriorityは$P(i) = \frac{p_{i}^{\alpha}}{\Sigma_k p_{k}^{\alpha}}$と計算される．
