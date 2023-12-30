@@ -24,18 +24,42 @@ $n$番目のチャネルの$(i,j)$成分には盤面の$(i,j)$
     \label{fig:input_encoding}
 \end{figure}
 
-\subsection{AlphaZeroの実装}
-ニューラルネットワークは入力に対する方策と価値を出力する．
-方策は上下左右それぞれの方向を選択する確率を表す$4$次元のベクトル値である．
-価値は
-
-\subsection{Prioritized Experience Replayの詳細}
-Prioritized Experience Replay~\cite{prioritized}は学習に使用するデータをランダムではなく， ある重みに従ってサンプルする手法である．
-この重みをpriorityと呼び， $i$番目のデータのpriorityは$P(i) = \frac{p_{i}^{\alpha}}{\Sigma_k p_{k}^{\alpha}}$と計算される．
-sum treeという二分木でデータを管理することで， $\mathcal{O}(\log n)$に改善することができる．
+またStochastic MuZero~\cite{StochasticMuZero}に倣って， ニューラルネットワークは価値を$D$次元のベクトル値として出力する．
+価値の学習ターゲット$x$~(スカラー値)~は， まず$h(x)= \sqrt{x+1} - 1 + \epsilon x \ (\epsilon=0.001)$によってスケールを調整する~(図~\ref{fig:transform}を参照)．
 \begin{figure}[t]
     \centering
-    \includegraphics[width=0.4\linewidth{}]{figures/sumtree.pdf}
+    \includegraphics[width=0.6\linewidth{}]{figures/transform_.pdf}
+    \caption{$h(x)$のグラフ}
+    \label{fig:transform}
+\end{figure}
+さらに$h(x)$はtwo-hotという， 特定の$2$つの要素以外は全ての$0$であるようなベクトル値に変換される．
+たとえば$h(x)=3.7$の場合， $3.7=3 \times 0.3 + 4 \times 0.7$であるため， $3$の重みが$0.3$， $4$の重みが$0.7$， それ以外は$0$である$D$次元ベクトルに変換される．
+これをニューラルネットワークの価値の学習ターゲットとして， Cross Entropy誤差を最小化するように訓練される．
+推論時にはニューラルネットワークの価値の出力を， softmaxにより全体の総和を$1$にする．
+これを$0$から$D$までのそれぞれの重みとして， 重み付け平均$y$を計算する．
+最後に$h(x)$の逆関数である$h^{-1}(y)= \epsilon^{-1} (y + 0.5\epsilon^{-1} + 1.0) - 0.5 \sqrt{4.0 \epsilon^{-3} y + 1.004 \epsilon^{-4}}$によって， $x=h^{-1}(y)$を得る．
+$3\times3$盤面の2048の実験では$D=200$， $4\times3$盤面では$D=400$， $4\times4$盤面では$D=600$とした．
+
+\subsection{AlphaZeroのニューラルネットワーク}
+ニューラルネットワークが出力する価値は， 
+ニューラルネットワークは入力に対して方策と価値を出力する．
+方策は上下左右それぞれの方向を選択する確率を表す$4$次元のベクトル値である．
+価値をベクトル値として出力する．
+価値の
+
+\subsection{Prioritized Experience Replayの実装}
+Prioritized Experience Replay~\cite{prioritized}は学習に使用するデータを一様ランダムではなく， priorityと呼ばれる重みに従ってサンプルするリプレイバッファである．
+リプレイバッファの$i$番目のデータのpriorityを$p_i$とする．
+このとき$i$番目のデータはハイパーパラメータ$\alpha$を用いて， 確率$P(i) = \frac{p_{i}^{\alpha}}{\Sigma_k p_{k}^{\alpha}}$でサンプルされる．
+
+Prioritized Experience Replayからのデータのサンプル， およびpriorityの更新は， sum-treeという二分木でデータを管理することで$\mathcal{O}(\log n)$で行うことができる．
+sum-treeの葉ノードはpriorityの値を保持し， 各ノードは左右の子ノードの合計値を保持する．
+そのため根ノードはpriority全体の合計値$S$を持つ．
+サンプルする際には， まず$0$から$S$までの値をランダムに生成し， 根ノードから葉ノードに至るまでたどることで選ぶ．
+図~\ref{fig:sumtree}にsum-treeと具体的なサンプルの仕方を例示する．
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.4\linewidth{}]{figures/sumtree_.pdf}
     \caption{sum treeの例}
     \label{fig:sumtree}
 \end{figure}

@@ -143,106 +143,18 @@ Mnihら~\cite{A3C}が提案したasynchronous advantage actor-critic~(A3C)~は�
 A3Cの発表以降， 方策ベースな深層強化学習の研究は数多くなされている．
 特にSchulmanらが提案したProximal Policy Optimization~(PPO)~\cite{PPO}は有名手法の$1$つである．
 
-\section{AlphaZeroとMuZero}
+\subsection{AlphaZeroとMuZero}
 Silverらが提案したAlphaZero~\cite{AlphaZero}は， 囲碁やチェスなどの二人零和完全確定情報ゲームを対象とした有力な深層強化学習手法である．
 AlphaZeroは盤面の特徴量を入力として， その盤面における方策と価値を出力するニューラルネットワークを， 自己対戦を通して得たデータから学習する．
-自己対戦において， AlphaZeroはモンテカルロ木探索~(MCTS)~というアルゴリズムを使用して指し手を選択する．
+そのため人間の棋譜などの教師データを使うことなく， 囲碁， 将棋， チェスにおいて当時の有力なプログラムを上回る強さを示して注目を集めた．
 
-\subsection{モンテカルロ木探索}
-ここではAlphaZeroが使用したモンテカルロ木探索~(MCTS)~について説明する．
-MCTSは探索で発見した各状態~(囲碁や将棋では盤面)~に対応するノードから成る探索木を構築する．
-探索木中のそれぞれの状態と行動の対~$(s,a)$~について， ${N(s,a), W(s,a), Q(s,a), P(s,a)}$という$4$つの統計量を管理する．
-\begin{itemize}
-  \item $N(s,a) \cdots$探索中に$s$から$a$を選択した回数
-  \item $W(s,a) \cdots$最適行動価値$q_*(s,a)$の推定値の累計
-  \item $Q(s,a) \cdots$最適行動価値$q_*(s,a)$の推定値の平均~($W(s,a) / N(s,a)$)
-  \item $P(s,a) \cdots$ニューラルネットワークが評価する$s$から$a$を選択する確率
-\end{itemize}
-探索木は最初， 現在の状態に対応するノードである根ノードのみから成る．
-MCTSは選択， 評価， 逆伝播， 展開の$4$つのステップを繰り返すことで， 探索木を大きくする．
-この$4$つのステップはまとめてシミュレーションと呼ばれる．
-すなわちシミュレーションを繰り返すことで深い探索を行い， 良い行動を選択することができる．
-以下ではそれぞれのステップについて説明する．
-\subsubsection*{選択~(図~\ref{fig:selection})}
-現在のゲーム木の根ノード$s_0$から有望な行動を選択し， 葉ノード$s_L$に至るまで辿り続ける．
-具体的にはノード$s_t$において，以下の式~\ref{eq:puct}で表される$a_t$を選択する．
-\begin{align}
-  a_t = \argmax_a(Q(s_t,a) + C(s_t)P(s_t,a)\sqrt{N(s_t)}/(1 + N(s_t,a)))
-  \label{eq:puct}
-\end{align}
-ただし$C(s_t)$は探索率， $N(s_t)$はノード$s_t$の訪問回数を表す．
-これは現段階での価値の推定値$Q(s_t,a)$と探索項$C(s_t)P(s_t,a)\sqrt{N(s_t)}/(1 + N(s_t,a))$を合計したものである．
-$N(s_t,a)$が小さい行動ほど探索項は大きな値を示す．
-
-\subsubsection*{評価~(図~\ref{fig:evaluate})}
-選択のステップの葉ノード$s_L$をニューラルネットワーク$f_\theta$により評価する．
-$f_\theta$が評価した$s_L$における方策を$\pi(\cdot|s_L)$， $s_L$の価値を$v_L$とする．
-
-\subsubsection*{逆伝播~(図~\ref{fig:backpropagate})}
-$s_L$から選択可能なそれぞれの行動$a$について， $N(s_L, a)=0, W(s_L, a)=0, Q(s_L, a)=0, P(s_L, a)=\pi(a|s_L)$と初期化する．
-さらに$s_0$から$s_L$に至る各エッジ$(s_t,a_t)$について， 以下のように各統計量の値を更新する．
-\begin{align*}
-  N(s_t, a_t) &= N(s_t, a_t)+1 \\
-  W(s_t, a_t) &= W(s_t, a_t) + v_L \\
-  Q(s_t, a_t) &= \frac{W(s_t,a_t)}{N(s_t,a_t)}
-\end{align*}
-
-\subsubsection*{展開~(図~\ref{fig:expand})}
-$s_L$から遷移しうる次の状態を新たなノードとして探索木に追加する．
-
-\subsubsection*{行動の決定方法}
-一定回数のシミュレーションを行った後に， 実際に選ぶ行動を決定する．
-根ノード$s_0$から選択可能な各行動$a$について， $N(s_0, a)^{1/\tau}$に比例した確率で行動を選択する．
-$\tau$は温度パラメータと呼ばれ， $0$に近づくほど訪問回数に関して貪欲な選択をするようになる．
-多様な学習データを集めるために学習の序盤では$\tau$を大きく設定し， 学習が進むについて$0$に近づける．
-
-\begin{figure}
-  \begin{subfigure}[T]{0.4\columnwidth}
-    \centering
-    \includegraphics[width=\columnwidth]{figures/selection_.pdf}
-    \caption{選択}
-    \label{fig:selection}
-  \end{subfigure}
-  \begin{subfigure}[T]{0.4\columnwidth}
-    \centering
-    \includegraphics[width=\columnwidth]{figures/evaluate_.pdf}
-    \caption{評価}
-    \label{fig:evaluate}
-  \end{subfigure}
-  \begin{subfigure}[T]{0.4\columnwidth}
-    \centering
-    \includegraphics[width=\columnwidth]{figures/backpropagate_.pdf}
-    \caption{逆伝播}
-    \label{fig:backpropagate}
-  \end{subfigure}
-  \hspace{3cm}
-  \begin{subfigure}[T]{0.4\columnwidth}
-    \centering
-    \includegraphics[width=\columnwidth]{figures/expand_.pdf}
-    \caption{展開}
-    \label{fig:expand}
-  \end{subfigure}
-  \caption{MCTSの各ステップ~(オレンジ色のノードは自分の手番， 青色のノードは相手の手番)}
-  \label{fig:mcts}
-\end{figure}
-
-\subsection{自己対戦とニューラルネットワークの学習}
-AlphaZeroは人間の棋譜ではなく， 自己対戦によって得た学習データを使ってニューラルネットワークを訓練する．
-自己対戦は， 
-各訪問回数を正規化した$\pmb{\pi}$
-すなわち式~\ref{eq:az_loss}で表される誤差関数$l$を最小化するようにパラメータを更新する．
-\begin{align}
-\label{eq:az_loss}
-l = (z-v)^2 - \pmb{\pi}^{\mathrm{T}} \log \mathbf{p}
-\end{align}
-
-\subsection{AlphaZeroの評価とMuZero}
-\label{subsec: muzero}
-囲碁， 将棋， チェスにおいて当時の有力なプログラムを上回る強さを示して注目を集めた．
 AlphaZeroが行うMCTSは， ゲームのルールや環境のダイナミクスが既知であることを前提としている．
-すなわち現在の状態$s_t$から行動$a_t$を選択した後の状態$s_{t+1}$を， $s_t$のみ観測可能な状況から知ることができる必要がある．
+すなわち現在の状態$s_t$から行動$a_t$を選択した後の状態$s_{t+1}$を， $s_t$のみ観測している状況から知ることができる必要がある．
 そのためAlphaZeroは複雑なダイナミクスを持つAtariなどのゲームには適用することが難しい．
 Schrittwieserらが提案したMuZero~\cite{MuZero}は， ニューラルネットワークで環境のダイナミクスをモデル化し， 学習することを提案した．
+MuZeroは二人零和完全確定情報ゲームにおいてAlphaZeroと同等の強さ， Atariにおいて当時の有力手法と同等以上の性能を示した．
+\ref{subsec: stochastic_muzero}節でMuZeroを確率的な環境に対応できるように拡張した， Stochastic MuZeroについて述べる．
+そこでMCTSの具体的な方法や， ニューラルネットワークの学習方法について述べる．
 
 \section{2048への強化学習の応用}
 \label{sec:rlto2048}
@@ -273,28 +185,112 @@ TD afterstate学習は観測している状態$s$からafterstate $s'$への遷�
 山下ら~\cite{afterstate_ppo}は
 
 \subsection{Stochastic MuZero}
+\label{subsec: stochastic_muzero}
 Antonoglouらが提案したStochastic MuZero~\cite{StochasticMuZero}は~\ref{subsec: muzero}節で述べたMuZeroを， 確率的な環境にも対応できるように拡張した手法である．
 Stochastic MuZeroは確率的ゲームである2048とバックギャモンでMuZeroを大きく上回るパフォーマンスを発揮した．
 さらにランダム性のない囲碁においてもMuZeroと同等のレーティングを達成し， 対象とするドメインが幅広いことを示した．
-
 2048においては， \ref{subsec: td_afterstate}節で述べたTD afterstate学習の先行研究~\cite{DBLP:journals/corr/Jaskowski16}と比較して， 一切のドメイン知識を必要とせず， より優れたパフォーマンスを出したことが強調された．
 一方で， 論文内で示されたStochastic MuZeroの最終的な平均スコアは約$50$万点で， expectimax探索を行うことで平均$609,104$点を達成した文献~\cite{DBLP:journals/corr/Jaskowski16}の結果を明確に上回るとはいえない．
-以下では具体的に2048へ適用することを想定した手法の説明を行う．
 
-Stochastic MuZeroは以下の$5$つのニューラルネットワークを学習する．
+Stochastic MuZeroは環境のダイナミクスモデルをデータから学習し， これを用いてモンテカルロ木探索~(MCTS)~によるプランニングを行う．
+ここではStochastic MuZeroのMCTSの方法， および方策・価値ニューラルネットワークの学習方法について説明する．
+環境のダイナミクスモデルの学習方法については論文~\cite{StochasticMuZero}の$4$節を参照されたい．
+
+\subsubsection{Stochastic MuZeroのモンテカルロ木探索}
+Stochastic MuZeroはMCTSにおいて， \textit{decisionノード}と\textit{chanceノード}という2種類のノードから成る探索木を用いる．
+decisionノードからchanceノードへの遷移は決定的で， chanceノードからdecisionノードへの遷移は確率的に行われる．
+すなわち2048の文脈では， decisionノードはプレイヤが行動を選択する状態に対応し， chanceノードはafterstateに対応する．
+よって本稿では分かりやすさのため， decisionノードを状態ノード， chanceノードをafterstateと呼ぶことにする．
+そのためdecisionノードの子はchanceノードで， chanceノードの子はdecisionノードである．
+
+探索木中のそれぞれのノード$s$は， ${N(s), W(s), Q(s), P(s)}$という$4$つの統計量を管理する．
 \begin{itemize}
-  \item \textit{Representation}ネットワーク $h$
-  \item \textit{Prediction}ネットワーク $f$
-  \item \textit{Afterstate Dynamics}ネットワーク $\phi$
-  \item \textit{Afterstate Prediction}ネットワーク $\psi$
-  \item \textit{Dynamics}ネットワーク $g$
+  \item $N(s) \cdots$探索中に$s$を訪問した回数
+  \item $W(s) \cdots$ $s$を根とする部分木の価値の推定値の合計
+  \item $Q(s) \cdots$ $s$を根とする部分木の価値の推定値の平均~($W(s,a) / N(s,a)$)
+  \item $P(s) \cdots$ $s$の親から$s$への遷移確率
 \end{itemize}
+MCTSは選択， 評価， 逆伝播， 展開の$4$つのステップを繰り返すことで， 探索木を大きくする．
+この$4$つのステップはまとめてシミュレーションと呼ばれる．
+すなわちシミュレーションを繰り返すことで深い探索を行い， 良い行動を選択することができる．
+以下ではそれぞれのステップについて説明する．
 
-まずStochastic MuZeroは\textit{decisionノード}と\textit{chanceノード}という2種類のノードから成る探索木を用いてMCTSを行う．
-decisionノードはプレイやが行動を選択する状態に対応し， chanceノードはafterstateに対応する．
-decisionノードからchanceノードへの遷移は決定的で， chanceノード
-これは$1$回の確率的な遷移を， 決定的な部分~(decisionノード)~と確率的な部分~(chanceノード)~に分けているといえる．
-2048においてdecisionノードはプレイやが行動を選択する状態に対応し， chanceノードはafterstateに対応している．
+\paragraph{選択}
+現在のゲーム木の根ノード$s_0$~(decisionノード)~から有望な子ノードを選択し， これを葉ノード$s_L$に至るまで辿り続ける．
+decisionノード$s_d$においては， 以下のPUCT式~\ref{eq:puct}が最大となるような子chanceノード$s_c$を選択する．
+\begin{align}
+  Q(s_c) + C(s_c)P(s_c)\frac{\sqrt{1+N(s_d)}}{1+N(s_c)}
+  \label{eq:puct}
+\end{align}
+ただし$C(s_c)$は探索率を表す．
+これは現段階での価値の推定値$Q(s_c)$と探索項$C(s_c)P(s_c)\sqrt{1+N(s_d)}/(1 + N(s_c))$を合計したものである．
+$N(s_c)$が小さい子ノードほど探索項は大きな値を示す．
+一方chanceノード$s_c$においては， 単にそれぞれの子decisionノード$s_d$への遷移確率$P(s_d)$に従って確率的に選択する．
+
+\paragraph{評価~(図~\ref{fig:evaluate})}
+選択のステップの葉ノード$s_L$をニューラルネットワークにより評価する．
+$s_L$がdecisionノードである場合には， $s_L$における方策$\pi(\cdot|s_L)$および$s_L$の価値を$v_L$を得る．
+$s_L$がchanceノードである場合には， $s_L$の価値$v_L$のみを得る．
+
+\paragraph{展開~(図~\ref{fig:expand})}
+$s_L$がdecisionノード
+$s_L$から遷移しうる次の状態を新たなノードとして探索木に追加する．
+
+\paragraph{逆伝播~(図~\ref{fig:backpropagate})}
+$s_L$について， $N(s_L, a)=0, W(s_L, a)=0, Q(s_L, a)=0$と初期化する．
+さらに
+さらに$s_0$から$s_L$に至る各エッジ$(s_t,a_t)$について， 以下のように各統計量の値を更新する．
+\begin{align*}
+  N(s_t, a_t) &= N(s_t, a_t)+1 \\
+  W(s_t, a_t) &= W(s_t, a_t) + v_L \\
+  Q(s_t, a_t) &= \frac{W(s_t,a_t)}{N(s_t,a_t)}
+\end{align*}
+
+\subsubsection*{行動の決定方法}
+一定回数のシミュレーションを行った後に， 実際に選ぶ行動を決定する．
+根ノード$s_0$から選択可能な各行動$a$について， $N(s_0, a)^{1/\tau}$に比例した確率で行動を選択する．
+$\tau$は温度パラメータと呼ばれ， $0$に近づくほど訪問回数に関して貪欲な選択をするようになる．
+多様な学習データを集めるために学習の序盤では$\tau$を大きく設定し， 学習が進むについて$0$に近づける．
+
+\subsubsection{ニューラルネットワークの学習}
+AlphaZeroは人間の棋譜ではなく， 自己対戦によって得た学習データを使ってニューラルネットワークを訓練する．
+自己対戦は， 
+各訪問回数を正規化した$\pmb{\pi}$
+すなわち式~\ref{eq:az_loss}で表される誤差関数$l$を最小化するようにパラメータを更新する．
+\begin{align}
+\label{eq:az_loss}
+l = (z-v)^2 - \pmb{\pi}^{\mathrm{T}} \log \mathbf{p}
+\end{align}
+
+\begin{figure}
+  \begin{subfigure}[T]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/selection_.pdf}
+    \caption{選択}
+    \label{fig:selection}
+  \end{subfigure}
+  \begin{subfigure}[T]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/evaluate_.pdf}
+    \caption{評価}
+    \label{fig:evaluate}
+  \end{subfigure}
+  \begin{subfigure}[T]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/backpropagate_.pdf}
+    \caption{逆伝播}
+    \label{fig:backpropagate}
+  \end{subfigure}
+  \hspace{3cm}
+  \begin{subfigure}[T]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/expand_.pdf}
+    \caption{展開}
+    \label{fig:expand}
+  \end{subfigure}
+  \caption{MCTSの各ステップ~(オレンジ色のノードはdecisionノード， 青色のノードはchanceノード)}
+  \label{fig:mcts}
+\end{figure}
 
 \begin{table}[t]
   \centering
