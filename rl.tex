@@ -121,7 +121,8 @@ $J(\pmb{\theta})$は， 方策$\pi_{\pmb{\theta}}$に従ったときの初期状
   & = \mathbb{E}_{\pi} \left[\sum_a q_\pi(S_t, a) \nabla \pi(a|S_t, \pmb{\theta})\right] \notag \\
   & = \mathbb{E}_{\pi} \left[\sum_a \pi(a|S_t, \pmb{\theta}) q_\pi(S_t, a) \frac{\nabla \pi(a|S_t, \pmb{\theta})}{\pi(a|S_t, \pmb{\theta})}\right] \notag \\
   & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) \frac{\nabla \pi(A_t|S_t, \pmb{\theta})}{\pi(A_t|S_t,\pmb{\theta})}\right] \notag \\
-  & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) \nabla \ln \pi(A_t|S_t, \pmb{\theta}) \right] \notag 
+  & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) \nabla \ln \pi(A_t|S_t, \pmb{\theta}) \right] \notag \\
+  & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) - b(S_t) \nabla \ln \pi(A_t|S_t, \pmb{\theta}) \right] \notag 
 \end{align}
 よって学習率を$\alpha$とすると， パラメータ$\pmb{\theta}$の更新式が導かれる．
 \begin{align}
@@ -131,19 +132,32 @@ $J(\pmb{\theta})$は， 方策$\pi_{\pmb{\theta}}$に従ったときの初期状
 ただし未知の値$q_\pi(S_t,A_t)$を， 学習データから推定する必要がある．
 Williams~\cite{Williams:92}は$q_\pi(S_t,A_t)$の推定値として， $S_t$から$A_t$を選択して実際に獲得した報酬の総和$G_t = \Sigma_{k=0}^{T} R_{t+k+1}$を用いることを提案した．
 $G_t$は$q_\pi(S_t,A_t)$の不偏推定量としての性質をみたす一方で， 分散が大きく学習が安定しない．
+またパラメータの更新をエピソードが終了するまで行うことができない．
 
-そこで価値関数$v_\pi$の推定値$V$を用いる．
-さらに$G_t = \Sigma_{k=0}^{T} R_{t+k+1}$を$\Sigma_{k=0}^{n-1} R_{t+k+1} + V(S_{t+n})$によって推定する．
-
-
-
-このように学習した価値関数をactor-criticな手法と呼ばれる．
+ここで式~\ref{eq: policy_gradient_theorem}において， 行動$a$に依存しない定数を$b(s)$として$\Sigma_a b(s) \nabla \pi(a|s,\pmb{\theta}) = b(s) \nabla \Sigma_a \pi(a|s, \pmb{\theta}) = 0$に注目すると， 以下の式~\ref{eq:reinforce_baseline}が成り立つ．
+\begin{align}
+  \label{eq:reinforce_baseline}
+  \nabla J(\pmb{\theta}) \propto \sum_s \mu(s) \sum_a \left(q_{\pi}(s,a) - b(s)\right) \nabla \pi(a|s, \pmb{\theta})
+\end{align}
+$b(s)$として$s$の価値関数$v_{\pi}(s)$を考えることが一般的である．
+$q_{\pi}(s,a) - v_{\pi}(s)$は， 状態$s$で行動$a$をとることが他の行動をとることに比べて， どれくらい良いかを示す値で一般的にアドバンテージと呼ばれる．
+よってパラメータ更新式~\ref{eq:reinforce}中の$q_\pi(S_t,A_t)$の代わりに， アドバンテージ$q_\pi(S_t,A_t) - v(S_t)$を推定する．
+そのために方策関数の学習と同時に， 価値関数$v_\pi$の推定値$V$を学習する．
+$q_\pi(S_t,A_t) = \Sigma_{k=0}^{n-1} R_{t+k+1} + v_\pi(S_{t+n})$であるから， 以下の方策パラメータ$\pmb{\theta}$の更新式~\ref{eq:actor_critic}が導かれる．
+\begin{align}
+  \label{eq:actor_critic}
+  \pmb{\theta}_{t+1} \leftarrow \pmb{\theta}_{t} + \alpha \left[\sum_{k=0}^{n-1} \big(R_{t+k+1} + V(S_{t+n}) - V(S_{t+n})\big) \nabla \ln \pi(A_t|S_t, \pmb{\theta}) \right]
+\end{align}
+ここで$\Sigma_{k=0}^{n-1} R_{t+k+1} + v_\pi(S_{t+n})$は$n$ステップリターンと呼ばれる．
+$n$をエピソードの終了時刻$T$とすると， $n$ステップリターンは$G_t$に一致する．
+このように学習した価値関数を行動の良さを評価するために用いる手法は， 全般にactor-criticな手法と呼ばれる．
 
 Mnihら~\cite{A3C}が提案したasynchronous advantage actor-critic~(A3C)~は， 方策関数と価値関数をニューラルネットワークにより近似したactor-criticな手法で， Atariや物理シミュレーションの実験で高い成果を収めた．
 A3Cの発表以降， 方策ベースな深層強化学習の研究は数多くなされている．
 特にSchulmanらが提案したProximal Policy Optimization~(PPO)~\cite{PPO}は有名手法の$1$つである．
 
 \subsection{AlphaZeroとMuZero}
+\label{subsec:zero}
 Silverらが提案したAlphaZero~\cite{AlphaZero}は， 囲碁やチェスなどの二人零和完全確定情報ゲームを対象とした有力な深層強化学習手法である．
 AlphaZeroは盤面の特徴量を入力として， その盤面における方策と価値を出力するニューラルネットワークを， 自己対戦を通して得たデータから学習する．
 そのため人間の棋譜などの教師データを使うことなく， 囲碁， 将棋， チェスにおいて当時の有力なプログラムを上回る強さを示して注目を集めた．
@@ -186,13 +200,14 @@ TD afterstate学習は観測している状態$s$からafterstate $s'$への遷�
 
 \subsection{Stochastic MuZero}
 \label{subsec: stochastic_muzero}
-Antonoglouらが提案したStochastic MuZero~\cite{StochasticMuZero}は~\ref{subsec: muzero}節で述べたMuZeroを， 確率的な環境にも対応できるように拡張した手法である．
+Antonoglouらが提案したStochastic MuZero~\cite{StochasticMuZero}は~\ref{subsec:zero}節で述べたMuZeroを， 確率的な環境にも対応できるように拡張した手法である．
 Stochastic MuZeroは確率的ゲームである2048とバックギャモンでMuZeroを大きく上回るパフォーマンスを発揮した．
 さらにランダム性のない囲碁においてもMuZeroと同等のレーティングを達成し， 対象とするドメインが幅広いことを示した．
 2048においては， \ref{subsec: td_afterstate}節で述べたTD afterstate学習の先行研究~\cite{DBLP:journals/corr/Jaskowski16}と比較して， 一切のドメイン知識を必要とせず， より優れたパフォーマンスを出したことが強調された．
 一方で， 論文内で示されたStochastic MuZeroの最終的な平均スコアは約$50$万点で， expectimax探索を行うことで平均$609,104$点を達成した文献~\cite{DBLP:journals/corr/Jaskowski16}の結果を明確に上回るとはいえない．
 
-Stochastic MuZeroは環境のダイナミクスモデルをデータから学習し， これを用いてモンテカルロ木探索~(MCTS)~によるプランニングを行う．
+Stochastic MuZeroは方策・価値ニューラルネットワークに加えて， 環境のダイナミクスモデルをニューラルネットワークにより推論する．
+これらのニューラルネットワークを， モンテカルロ木探索~(MCTS)~によるプランニングを行って得た学習データを用いて訓練する．
 ここではStochastic MuZeroのMCTSの方法， および方策・価値ニューラルネットワークの学習方法について説明する．
 環境のダイナミクスモデルの学習方法については論文~\cite{StochasticMuZero}の$4$節を参照されたい．
 
@@ -200,15 +215,15 @@ Stochastic MuZeroは環境のダイナミクスモデルをデータから学習
 Stochastic MuZeroはMCTSにおいて， \textit{decisionノード}と\textit{chanceノード}という2種類のノードから成る探索木を用いる．
 decisionノードからchanceノードへの遷移は決定的で， chanceノードからdecisionノードへの遷移は確率的に行われる．
 すなわち2048の文脈では， decisionノードはプレイヤが行動を選択する状態に対応し， chanceノードはafterstateに対応する．
-よって本稿では分かりやすさのため， decisionノードを状態ノード， chanceノードをafterstateと呼ぶことにする．
 そのためdecisionノードの子はchanceノードで， chanceノードの子はdecisionノードである．
 
-探索木中のそれぞれのノード$s$は， ${N(s), W(s), Q(s), P(s)}$という$4$つの統計量を管理する．
+探索木中のそれぞれのノード$s$は， ${N(s), W(s), Q(s), P(s), R(s)}$という$5$つの統計量を管理する．
 \begin{itemize}
   \item $N(s) \cdots$探索中に$s$を訪問した回数
   \item $W(s) \cdots$ $s$を根とする部分木の価値の推定値の合計
-  \item $Q(s) \cdots$ $s$を根とする部分木の価値の推定値の平均~($W(s,a) / N(s,a)$)
+  \item $Q(s) \cdots$ $s$を根とする部分木の価値の推定値の平均~($W(s) / N(s)$)
   \item $P(s) \cdots$ $s$の親から$s$への遷移確率
+  \item $R(s) \cdots$ $s$の親から$s$へ遷移するときに獲得する即時報酬
 \end{itemize}
 MCTSは選択， 評価， 逆伝播， 展開の$4$つのステップを繰り返すことで， 探索木を大きくする．
 この$4$つのステップはまとめてシミュレーションと呼ばれる．
@@ -233,34 +248,38 @@ $s_L$がdecisionノードである場合には， $s_L$における方策$\pi(\c
 $s_L$がchanceノードである場合には， $s_L$の価値$v_L$のみを得る．
 
 \paragraph{展開~(図~\ref{fig:expand})}
-$s_L$がdecisionノード
-$s_L$から遷移しうる次の状態を新たなノードとして探索木に追加する．
+$s_L$がdecisionノードである場合には， $s_L$に対応する状態から遷移可能なafterstateを$s_L$の子chanceノードとして探索木に追加する．
+それぞれの子chanceノード$s_c$について， $P(s_c) = \pi(s_c|s_L)$とする．
+
+$s_L$がchanceノードである場合には， $s_L$に対応するafterstateから遷移可能な状態を$s_L$の子decisionノードとして探索木に追加する．
+それぞれの子decisionノード$s_d$について， $P(s_d)$は$s_L$に対応するafterstateから$s_d$に対応する状態へ遷移する環境の確率とする．
 
 \paragraph{逆伝播~(図~\ref{fig:backpropagate})}
 $s_L$について， $N(s_L, a)=0, W(s_L, a)=0, Q(s_L, a)=0$と初期化する．
 さらに
-さらに$s_0$から$s_L$に至る各エッジ$(s_t,a_t)$について， 以下のように各統計量の値を更新する．
+さらに$s_0$から$s_L$に至る各ノード$s$について， 以下のように各統計量の値を更新する．
 \begin{align*}
-  N(s_t, a_t) &= N(s_t, a_t)+1 \\
-  W(s_t, a_t) &= W(s_t, a_t) + v_L \\
-  Q(s_t, a_t) &= \frac{W(s_t,a_t)}{N(s_t,a_t)}
+  N(s) &\leftarrow N(s) + 1 \\
+  W(s) &\leftarrow W(s) + v_L \\
+  Q(s) &\leftarrow \frac{W(s)}{N(s)}
 \end{align*}
 
 \subsubsection*{行動の決定方法}
 一定回数のシミュレーションを行った後に， 実際に選ぶ行動を決定する．
-根ノード$s_0$から選択可能な各行動$a$について， $N(s_0, a)^{1/\tau}$に比例した確率で行動を選択する．
+根ノード$s_0$のそれぞれの子chanceノード$s_c$について， $N(s_c)^{1/\tau}$に比例した確率で子ノードを選択する．
+選択した子ノードに対応するafterstateに遷移するような行動をとる．
 $\tau$は温度パラメータと呼ばれ， $0$に近づくほど訪問回数に関して貪欲な選択をするようになる．
 多様な学習データを集めるために学習の序盤では$\tau$を大きく設定し， 学習が進むについて$0$に近づける．
 
-\subsubsection{ニューラルネットワークの学習}
-AlphaZeroは人間の棋譜ではなく， 自己対戦によって得た学習データを使ってニューラルネットワークを訓練する．
-自己対戦は， 
+\subsubsection*{ニューラルネットワークの学習}
+MCTSによるプレイによって得たデータを使ってニューラルネットワークを訓練する．
 各訪問回数を正規化した$\pmb{\pi}$
 すなわち式~\ref{eq:az_loss}で表される誤差関数$l$を最小化するようにパラメータを更新する．
 \begin{align}
 \label{eq:az_loss}
 l = (z-v)^2 - \pmb{\pi}^{\mathrm{T}} \log \mathbf{p}
 \end{align}
+ただし実際の価値関数の学習においては付録~\ref{subsec:nn_impl}節で説明するように， 
 
 \begin{figure}
   \begin{subfigure}[T]{0.4\columnwidth}
@@ -291,18 +310,5 @@ l = (z-v)^2 - \pmb{\pi}^{\mathrm{T}} \log \mathbf{p}
   \caption{MCTSの各ステップ~(オレンジ色のノードはdecisionノード， 青色のノードはchanceノード)}
   \label{fig:mcts}
 \end{figure}
-
-\begin{table}[t]
-  \centering
-  \begin{tabular}{clll}
-   \hline
-   手法 & 対象ドメイン & 測定方法 & 測定結果 \\
-   \hline \hline
-   AlphaZero & 二人零和有限完全確定情報ゲーム & 二人が離れてランプの光を見る & (音速10倍以上) \\
-   MuZero & 二人零和有限完全確定情報ゲーム + Atari & 木星の衛星の観測から & 2 \\
-   Stochastic MuZero & Bradley & 星の収差から & 3.01 \\
-   \hline
-  \end{tabular}
-\end{table}
 
 \subsection{先行研究の考察}
