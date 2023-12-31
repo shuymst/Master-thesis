@@ -122,7 +122,6 @@ $J(\pmb{\theta})$は， 方策$\pi_{\pmb{\theta}}$に従ったときの初期状
   & = \mathbb{E}_{\pi} \left[\sum_a \pi(a|S_t, \pmb{\theta}) q_\pi(S_t, a) \frac{\nabla \pi(a|S_t, \pmb{\theta})}{\pi(a|S_t, \pmb{\theta})}\right] \notag \\
   & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) \frac{\nabla \pi(A_t|S_t, \pmb{\theta})}{\pi(A_t|S_t,\pmb{\theta})}\right] \notag \\
   & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) \nabla \ln \pi(A_t|S_t, \pmb{\theta}) \right] \notag \\
-  & = \mathbb{E}_{\pi} \left[q_\pi(S_t,A_t) - b(S_t) \nabla \ln \pi(A_t|S_t, \pmb{\theta}) \right] \notag 
 \end{align}
 よって学習率を$\alpha$とすると， パラメータ$\pmb{\theta}$の更新式が導かれる．
 \begin{align}
@@ -162,7 +161,7 @@ Silverらが提案したAlphaZero~\cite{AlphaZero}は， 囲碁やチェスな�
 AlphaZeroは盤面の特徴量を入力として， その盤面における方策と価値を出力するニューラルネットワークを， 自己対戦を通して得たデータから学習する．
 そのため人間の棋譜などの教師データを使うことなく， 囲碁， 将棋， チェスにおいて当時の有力なプログラムを上回る強さを示して注目を集めた．
 
-AlphaZeroが行うMCTSは， ゲームのルールや環境のダイナミクスが既知であることを前提としている．
+AlphaZeroはMCTSを行うにあたって， ゲームのルールや環境のダイナミクスが既知であることを前提としている．
 すなわち現在の状態$s_t$から行動$a_t$を選択した後の状態$s_{t+1}$を， $s_t$のみ観測している状況から知ることができる必要がある．
 そのためAlphaZeroは複雑なダイナミクスを持つAtariなどのゲームには適用することが難しい．
 Schrittwieserらが提案したMuZero~\cite{MuZero}は， ニューラルネットワークで環境のダイナミクスをモデル化し， 学習することを提案した．
@@ -195,8 +194,11 @@ Szubertらは文献~\cite{Szubert}でN-tupleネットワークを用いたQ学�
 TD afterstate学習は観測している状態$s$からafterstate $s'$への遷移までをシミュレートする， いわば$0.5$手読みの探索を行っているため， $0$手読みのQ学習と比べて学習しやすいと考えられる．
 
 \subsection{Afterstate PPO}
-価値ベースな手法であるTD afterstate学習が一方で方策ベースな強化学習手法で2048を
-山下ら~\cite{afterstate_ppo}は
+\ref{subsec: td_afterstate}節では， 価値ベースな手法であるTD afterstate学習が2048において主流な強化学習手法の$1$つであることを説明した．
+一方で， 2048において目立った方策ベースな強化学習手法は
+山下ら~\cite{afterstate_ppo}はPPO~\cite{PPO}を2048に工夫して適用する， Afterstate PPOという手法を提案した．
+すなわち状態$s$から行動$a$をとったときのafterstateをニューラルネットワークの入力とし， その出力を行動$a$の選択確率のロジットとする．
+通常のPPOでは全く学習が進まなかった一方で， Afterstate PPOは学習後2048のタイルを平均約$50\%$の割合で完成させられることを示した．
 
 \subsection{Stochastic MuZero}
 \label{subsec: stochastic_muzero}

@@ -21,19 +21,20 @@
 ゲームはプレイヤの行動による数字タイルのスライドと新たな数字タイルの出現を交互に繰り返して進行する．
 盤面上の数字タイルが市松模様のようになると， プレイヤが選択可能な行動がなくなったときにゲームは終了する~(図~\ref{fig:terminal}を参照)．
 \begin{figure}[h]
-    \begin{minipage}[T]{0.4\columnwidth}
-        \centering
-        \includegraphics[width=0.4\columnwidth]{figures/terminal_.pdf}
-        \caption{終了状態の例}
-        \label{fig:terminal}
-    \end{minipage}
-    % \hspace{0.04\columnwidth} % ここで隙間作成
-    \begin{minipage}[T]{0.4\columnwidth}
-        \centering
-        \includegraphics[width=0.4\columnwidth]{figures/limit.pdf}
-        \caption{最大到達盤面の例~(数字は指数部のみ)}
-        \label{fig:limit}
-    \end{minipage}
+\centering
+\begin{minipage}[T]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=0.4\columnwidth]{figures/terminal_.pdf}
+    \caption{終了状態の例}
+    \label{fig:terminal}
+\end{minipage}
+% \hspace{0.04\columnwidth} % ここで隙間作成
+\begin{minipage}[T]{0.4\columnwidth}
+    \centering
+    \includegraphics[width=0.4\columnwidth]{figures/limit.pdf}
+    \caption{最大到達盤面の例~(数字は指数部のみ)}
+    \label{fig:limit}
+\end{minipage}
 \end{figure}
 
 ここでプレイヤが行動を選択する盤面を\textgt{状態}， 行動を選択して新たな数字タイルが出現する直前の盤面を\textit{afterstate}と呼ぶ．

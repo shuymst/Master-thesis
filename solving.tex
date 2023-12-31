@@ -42,6 +42,23 @@
 さらに2048を対象とした強化学習手法の良し悪しを， 定量的な指標によって評価することができると考えられる．
 一方で2048を完全解析することは， そのゲーム木の大きさによる計算コストの観点から現状難しいと考えられる．
 そこで本研究では本来$4\times4$盤面上で行われる2048のミニゲームとして， 盤面サイズを縮小した2048を完全解析することを提案する．
+\begin{figure}　
+\centering
+\begin{subfigure}[T]{0.2\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/mini2048.pdf}
+    \caption{$3\times3$盤面の2048}
+    \label{fig:mini2048}
+\end{subfigure}
+\hspace{1cm}
+\begin{subfigure}[T]{0.25\columnwidth}
+    \centering
+    \includegraphics[width=\columnwidth]{figures/mid2048.pdf}
+    \caption{$4\times3$盤面の2048}
+    \label{fig:mid2048}
+\end{subfigure}
+\label{fig:minigames}
+\end{figure}
 
 \subsection{盤面サイズが小さな2048の完全解析}
 \label{sec:mini2048}
@@ -147,14 +164,14 @@ $3\times3$盤面と$4\times3$盤面の2048の各時刻における状態数の�
 \begin{subfigure}[T]{0.4\columnwidth}
     \centering
     \includegraphics[width=\columnwidth]{figures/graph_mini.pdf}
-    \caption{$3\times3$盤面の2048}
+    \caption{$3\times3$盤面の2048の時刻と状態数}
     \label{fig:graph_mini}
 \end{subfigure}
 \hspace{1cm}
 \begin{subfigure}[T]{0.4\columnwidth}
     \centering
     \includegraphics[width=\columnwidth]{figures/graph_mid.pdf}
-    \caption{$4\times3$盤面の2048}
+    \caption{$4\times3$盤面の2048の時刻と状態数}
     \label{fig:graph_mid}
 \end{subfigure}
 \label{fig:time_state_num}
