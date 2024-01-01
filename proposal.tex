@@ -2,10 +2,24 @@
 \label{chap:proposal}
 \ref{sec:rlto2048}節で述べたように， 2048を対象とした強化学習の研究は数多くなされてきた．
 もしゲームが完全に解かれていれば， 強化学習手法の良し悪しを定量的に評価することができる．
-そこで本章では2048のミニゲームを完全解析し， それをベンチマークとすることで確率的ゲームである2048において強化学習を成功させるために重要な要素について検討する．
+一方で2048はゲーム木の大きさから， 完全解析を実行することは計算資源の観点から困難である．
+そこで本研究では2048のミニゲームの完全解析を行うことを提案する．
+さらに解析したミニゲームをベンチマークとして， 2048の強化学習手法について詳細に検討する．
 
 \input{solving.tex}
 
 \section{2048のミニゲームの完全解析と強化学習}
 \ref{sec:solving}節では強化学習のベンチマークとしての2048のミニゲームの提案， およびその完全解析を行った．
-本節では$3\times3$盤面の2048および$4\times3$
+本研究では~\ref{subsec: stochastic_muzero}節で述べた， Stochastic MuZero~\cite{StochasticMuZero}について詳細に研究する．
+ただしStochastic MuZeroのように， 環境のダイナミクスモデルを学習するには多くの計算資源を要する．
+そこでAlphaZero~\cite{AlphaZero}のように環境のダイナミクスは既知として， 方策・価値ネットワークの訓練のみを行う手法を考える．
+これを本稿では2048-AlphaZeroと呼ぶことにする．
+
+本節では$3\times3$盤面の2048および$4\times3$盤面の2048
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.7\linewidth{}]{figures/alphazero_3x3.pdf}
+    \caption{$2\times2$盤面の2048のゲーム木~(赤色のノードは初期状態， 青色のノードは終了状態)}
+    \label{fig:alphazero_3x3}
+\end{figure}
