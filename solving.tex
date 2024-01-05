@@ -85,7 +85,7 @@
 \caption{すべての状態の列挙}
 \label{alg:bfs}
 \begin{algorithmic}[1]
-\Function {enumeration}{}
+\Function {enumerate}{}
     \State INITIALIZE($S_4, S_6, S_8$)
     \For {$t=4$ to $t_{\text{max}}$}
         \ForAll {$s_t \in S_t$} 
@@ -114,7 +114,7 @@
 疑似コードをAlgorithm~\ref{alg:calculation}に示す．
 \begin{algorithm}[tb]
     \begin{algorithmic}[1]
-    \Function {calculation}{$t$}
+    \Function {retrograde}{}
         \For {$t=t_{\text{max}}$ to $4$}
             \ForAll {$s_t \in S_t$} 
                 \If {$s_t$ is gameover}
@@ -176,7 +176,6 @@ $3\times3$盤面と$4\times3$盤面の2048の各時刻における状態数の�
 \end{subfigure}
 \label{fig:time_state_num}
 \end{figure}
-
 参考として， $2\times2$盤面の2048のゲーム木全体を図~\ref{fig:game_tree}に示す．
 ゲーム木が拡大と縮小を繰り返す様子が見て取れる．
 \begin{figure}[t]
