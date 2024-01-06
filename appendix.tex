@@ -55,8 +55,8 @@ $n$番目のチャネルの$(i,j)$成分には盤面の$(i,j)$
 $3\times3$盤面の2048の実験では$D=200$， $4\times3$盤面では$D=400$， $4\times4$盤面では$D=600$とした．
 
 \subsection{Prioritized Experience Replayの実装}
-Prioritized Experience Replay~\cite{prioritized}は学習に使用するデータを一様ランダムではなく， priorityと呼ばれる重みに従ってサンプルするリプレイバッファである．
-リプレイバッファの$i$番目のデータのpriorityを$p_i$とする．
+Prioritized Experience Replay~\cite{prioritized}は学習に使用するデータを一様ランダムではなく， priorityと呼ばれる重みに従ってサンプルするExperience Replayである．
+$i$番目のデータのpriorityを$p_i$とする．
 このとき$i$番目のデータはハイパーパラメータ$\alpha$を用いて， 確率$P(i) = \frac{p_{i}^{\alpha}}{\Sigma_k p_{k}^{\alpha}}$でサンプルされる．
 
 Prioritized Experience Replayからのデータのサンプル， およびpriorityの更新は， sum-treeという二分木でデータを管理することで$\mathcal{O}(\log n)$で行うことができる．
@@ -128,7 +128,7 @@ $3\times3$盤面のminmax環境におけるプレイヤと環境の最善手順�
 \begin{figure}[t]
     \centering
     \includegraphics[width=\linewidth{}]{figures/minmax_transition.pdf}
-    \caption{minmax環境における双方の最善手順}
+    \caption{$3\times3$盤面のminmax環境における双方の最善手順}
     \label{fig:minmax_env}
 \end{figure}
 
@@ -147,7 +147,7 @@ $v_{\text{minmax-eval}}$は， 以下の式~\ref{eq:minmax_eval}に従って後�
     v_{\text{minmax-eval}}(s) =
     \begin{cases}
         0 & (s \text{が終了状態}) \\
-        \left(r(s, a_{\text{minmax}}) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s, a_{\text{minmax}})} v_{\text{minmax-eval}}(s_\text{next}) \right) & (\text{otherwise})
+        r(s, a_{\text{minmax}}) + \mathbb{E}_{s_\text{next} \in \mathcal{T}(s, a_{\text{minmax}})} v_{\text{minmax-eval}}(s_\text{next}) & (\text{otherwise})
     \end{cases}
     \label{eq:minmax_eval}
 \end{align}
