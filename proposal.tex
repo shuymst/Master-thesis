@@ -19,7 +19,7 @@
 2048-AlphaZeroは訓練時と， 訓練後の性能の評価時の両方でMCTSによるプランニングを行う．
 \ref{subsubsec:mcts}節で述べたように， MCTSはシミュレーションという単位で実行される．
 シミュレーションの回数が大きいほど， 探索は深く正確になる．
-以降では訓練時のシミュレーション回数が$n$回， 評価時のシミュレーション回数が$m$回のエージェントを$(\text{train-}n,\text{eval-}m)$と表す．
+以降では訓練時のシミュレーション回数が$n$回， 評価時のシミュレーション回数が$m$回のエージェントを$(\text{train-}n,\text{eval-}m)$のように表す．
 また評価時には$1,000$回のゲームの平均得点を用いる．
 
 まず一様ランダムに学習データをサンプルするExperience Replay~(以降Random Experience Replayと表記する)~を用いる手法と， Stochastic MuZeroと同様のpriorityに従ってサンプルするPrioritized Experience Replayを用いる手法の$2$つを比較する．
@@ -32,6 +32,8 @@
 そのために学習時と評価時のMCTSのシミュレーション回数を増減させたときに， エージェントの得点がどう変化するかを実験する．
 訓練時のシミュレーション回数が$10$回， $20$回， $50$回， $100$回のエージェントそれぞれについて， $0 \sim 100$回のシミュレーションで評価した結果を図~\ref{fig:mini2048_alphazero_simulations}に示す．
 ただしシミュレーション$0$回のMCTSとは， 状態$s$において方策ネットワークが示す$\pi(\cdot|s)$が最も高い行動を常に選択するものとする．
+またいずれの条件においても学習時にはPrioritized Experience Replayを用いる．
+
 \begin{figure}
     \begin{subfigure}[T]{0.5\columnwidth}
         \centering
