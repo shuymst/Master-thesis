@@ -10,6 +10,8 @@
 
 \section{2048のミニゲームの完全解析と強化学習}
 \ref{chap:solving}節では強化学習のベンチマークとしての2048のミニゲームの提案， およびその完全解析を行った．
+これらのミニゲームをベンチマークとすることで， 2048の強化学習手法の定量的評価を行うことができる．
+また$4\times4$盤面の
 これを題材として本研究では， ~\ref{subsec: stochastic_muzero}節で述べたStochastic MuZero~\cite{StochasticMuZero}について詳細に研究する．
 ただしStochastic MuZeroのように， 環境のダイナミクスモデルを学習するには多くの計算資源を要する．
 そのため本稿では， 環境のダイナミクスは既知として， 方策・価値ネットワークの訓練のみを行う2048-AlphaZeroを考える．
@@ -23,6 +25,7 @@
 また評価時には$1,000$回のゲームの平均得点を用いる．
 
 まず一様ランダムに学習データをサンプルするExperience Replay~(以降Random Experience Replayと表記する)~を用いる手法と， Stochastic MuZeroと同様のpriorityに従ってサンプルするPrioritized Experience Replayを用いる手法の$2$つを比較する．
+ここでは$300\times{10}^6$回の行動分の学習データを用いて訓練した．
 図~\ref{fig:mini2048_alphazero}にそれぞれのエージェント$(\text{train-}100,\text{eval-}100)$の学習の様子を示す．
 図中のoptimal valueとは~\ref{sec:solving}節の完全解析によって得た， $3\times3$盤面の2048の理論値である．
 平均得点の最大値は， Random Experience Replayを用いた場合が$5,216.50$点， Prioritized Experience Replayを用いた場合が$5,354.10$点であった．
@@ -33,7 +36,9 @@
 訓練時のシミュレーション回数が$10$回， $20$回， $50$回， $100$回のエージェントそれぞれについて， $0 \sim 100$回のシミュレーションで評価した結果を図~\ref{fig:mini2048_alphazero_simulations}に示す．
 ただしシミュレーション$0$回のMCTSとは， 状態$s$において方策ネットワークが示す$\pi(\cdot|s)$が最も高い行動を常に選択するものとする．
 またいずれの条件においても学習時にはPrioritized Experience Replayを用いる．
-
+図~\ref{fig:mini2048_alphazero_simulations}からtrain-$100$のエージェントは， 評価時のシミュレーション回数を$100$回から減らしても得点はあまり減少しない．
+そのためニューラルネットワークが訓練されていれば， MCTSによるプランニングを行わなくても
+一方で
 \begin{figure}
     \begin{subfigure}[T]{0.5\columnwidth}
         \centering
@@ -50,14 +55,29 @@
 \end{figure}
 
 Terauchiら~\cite{Min2048_matsuzaki}は$3\times3$盤面の2048の完全解析結果を題材に， TD-afterstate学習でN-tupleネットワークを訓練したプレイヤを様々な点から評価した．
-Terauchiらはパラメータ数が$7.1\times{10}^6$のN-tupleネットワークを訓練したが， 平均$4905.27$点にとどまったと報告している．
+Terauchiらはパラメータ数が$7.1\times{10}^6$のN-tupleネットワークを$500 \times {10}^6$回の行動分の学習データを用いて訓練したが， 平均$4905.27$点にとどまったと報告している．
 一方で本研究で実験した2048-AlphaZeroは， パラメータ数が$568,717$の状態を評価する方策・価値ニューラルネットワークと， パラメータ数$529,417$のafterstateを評価する価値ニューラルネットワークを持つ．
-よってTerauchiらのN-tupleネットワークと比べて約$7$分の$1$のパラメータ数で， 平均得点を大幅に上回ることができたといえる．
+エージェント$(\text{train-}100,\text{eval-}100)$は平均$5,354.10$点を達成し， 評価時にMCTSを行わないエージェント$(\text{train-}100,\text{eval-}0)$は平均$5,125.01$点を達成した．
+よってTerauchiらのN-tupleネットワークと比べて2048-AlphaZeroは， 約$7$分の$1$のパラメータ数， $5$分の$3$の学習データを用いて平均得点を上回ることができた．
+これらの結果を表~\ref{table:terauchi}にまとめる．
+\begin{table}[t]
+    \centering
+    \begin{tabular}{lrrrr}
+        \hline \hline
+        手法 & 平均得点 & 訓練時のプランニング & 評価時のプランニング & パラメータ数\\ \hline
+        TD afterstate~\cite{Min2048_matsuzaki} & $4,905.27$ & なし & なし & $7.1\times{10}^6$\\
+        2048-AlphaZero & $5,125.01$ & $100$シミュレーション & なし & $1,098,134$\\
+        2048-AlphaZero & $5,354.10$ & $100$シミュレーション & $100$シミュレーション & $1,098,134$ \\
+        \hline
+    \end{tabular}
+    \caption{N-tuple+TD afterstate学習と2048-AlphaZeroの比較}
+    \label{table:terauchi}
+\end{table}
 
 この要因としては以下が考えられる．
 \begin{itemize}
     \item ニューラルネットワークの関数近似手法としての優れた汎化性能
-    \item 
+    \item 訓練時のMCTSによる良質な学習データの獲得
 \end{itemize}
 
 \subsection{$4\times3$盤面の2048と2048-AlphaZero}

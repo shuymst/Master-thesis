@@ -204,7 +204,7 @@ TD afterstate学習は観測している状態$s$からafterstate $s'$への遷�
 一方で， 2048において目立った方策ベースな強化学習手法は
 山下ら~\cite{afterstate_ppo}はPPO~\cite{PPO}を2048に工夫して適用する， Afterstate PPOという手法を提案した．
 すなわち状態$s$から行動$a$をとったときのafterstateをニューラルネットワークの入力とし， その出力を行動$a$の選択確率のロジットとする．
-通常のPPOでは全く学習が進まなかった一方で， Afterstate PPOは学習後2048のタイルを平均約$50\%$の割合で完成させられることを示した．
+通常のPPOでは全く学習が進まなかった一方で， Afterstate PPOは学習後2048のタイルを平均約$50\%$の割合で完成させることに成功した．
 
 \subsection{Stochastic MuZero}
 \label{subsec: stochastic_muzero}
