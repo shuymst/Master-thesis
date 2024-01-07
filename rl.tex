@@ -221,6 +221,7 @@ Stochastic MuZeroは方策・価値ニューラルネットワークに加えて
 Stochastic MuZeroの環境のダイナミクスモデルの学習方法については， 文献~\cite{StochasticMuZero}の$4$節を参照されたい．
 
 \subsubsection{2048-AlphaZeroのMCTS}
+\label{subsubsec:mcts}
 2048-AlphaZeroは$2$つのニューラルネットワークを持つ．
 $1$つ目は， 状態盤面$s$の特徴量を入力として$s$における方策， $s$の価値を出力するニューラルネットワーク$f$である．
 $2$つ目は， afterstate盤面$s'$の特徴量を入力として$s'$の価値を出力するニューラルネットワーク$g$である．

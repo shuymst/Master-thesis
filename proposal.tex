@@ -16,17 +16,35 @@
 
 \subsection{$3\times3$盤面の2048と2048-AlphaZero}
 本節では$3\times3$盤面の2048を題材として， 2048-AlphaZeroの評価を行う．
+2048-AlphaZeroは訓練時と， 訓練後の性能の評価時の両方でMCTSによるプランニングを行う．
+\ref{subsubsec:mcts}節で述べたように， MCTSはシミュレーションという単位で実行される．
+シミュレーションの回数が大きいほど， 探索は深く正確になる．
+以降では訓練時のシミュレーション回数が$n$回， 評価時のシミュレーション回数が$m$回のエージェントを$(\text{train-}n,\text{eval-}m)$と表す．
+また評価時には$1,000$回のゲームの平均得点を用いる．
 
-図~\ref{fig:alphazero_3x3}にシミュレーション数$100$回のMCTSによるデータで訓練した， 2048-AlphaZeroの学習の様子を示す．
-なおプレイヤの評価時においてもシミュレーション数$100$回のMCTSによって行動を決定する．
-一様ランダムに学習データをサンプルするExperience Replay~(以降Random Experience Replayと表記する)~を用いる手法と， Stochastic MuZeroと同様の優先度に従ってサンプルするPrioritized Experience Replayを用いる手法の$2$つを実験した．
-平均得点の最大値は， Experience Replayを用いた場合が$5,216.50$点， Prioritized Experience Replayを用いた場合が$5,354.10$点であった．
+まず一様ランダムに学習データをサンプルするExperience Replay~(以降Random Experience Replayと表記する)~を用いる手法と， Stochastic MuZeroと同様のpriorityに従ってサンプルするPrioritized Experience Replayを用いる手法の$2$つを比較する．
+図~\ref{fig:mini2048_alphazero}にそれぞれのエージェント$(\text{train-}100,\text{eval-}100)$の学習の様子を示す．
+図中のoptimal valueとは~\ref{sec:solving}節の完全解析によって得た， $3\times3$盤面の2048の理論値である．
+平均得点の最大値は， Random Experience Replayを用いた場合が$5,216.50$点， Prioritized Experience Replayを用いた場合が$5,354.10$点であった．
 いずれも学習に従って最適価値に近い得点を獲得するようになるが， Prioritized Experience Replayを使用した方が僅かに点数が伸びる様子が見て取れる．
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.7\linewidth{}]{figures/alphazero_3x3.pdf}
-    \caption{$3\times3$盤面の2048-alphazero}
-    \label{fig:alphazero_3x3}
+
+次にMCTSによるプランニングが， 学習および評価時のエージェントの強さにどのように寄与しているかを調べる．
+そのために学習時と評価時のMCTSのシミュレーション回数を増減させたときに， エージェントの得点がどう変化するかを実験する．
+訓練時のシミュレーション回数が$10$回， $20$回， $50$回， $100$回のエージェントそれぞれについて， $0 \sim 100$回のシミュレーションで評価した結果を図~\ref{fig:mini2048_alphazero_simulations}に示す．
+ただしシミュレーション$0$回のMCTSとは， 状態$s$において方策ネットワークが示す$\pi(\cdot|s)$が最も高い行動を常に選択するものとする．
+\begin{figure}
+    \begin{subfigure}[T]{0.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{figures/alphazero_3x3.pdf}
+        \caption{$3\times3$盤面の2048-alphazero}
+        \label{fig:mini2048_alphazero}
+    \end{subfigure}
+    \begin{subfigure}[T]{0.5\columnwidth}
+        \centering
+        \includegraphics[width=\columnwidth]{figures/3x3_2048_alphazero_simulations.pdf}
+        \caption{$3\times3$盤面の2048-alphazero}
+        \label{fig:mini2048_alphazero_simulations}
+    \end{subfigure}
 \end{figure}
 
 Terauchiら~\cite{Min2048_matsuzaki}は$3\times3$盤面の2048の完全解析結果を題材に， TD-afterstate学習でN-tupleネットワークを訓練したプレイヤを様々な点から評価した．
