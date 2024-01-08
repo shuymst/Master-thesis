@@ -218,17 +218,18 @@ Stochastic MuZeroは方策・価値ニューラルネットワークに加えて
 これらのニューラルネットワークを， モンテカルロ木探索~(MCTS)~によるプランニングを行って得た学習データを用いて訓練する．
 以下ではAlphaZeroのように， 環境のダイナミクスを既知とした場合におけるStochastic MuZeroの方法を， 2048に適用することを想定して具体的に説明する．
 説明の便宜上これを本稿では， 2048-AlphaZeroと呼ぶことにする．
+2048-AlphaZeroはMCTSの実行方法， 方策・価値ニューラルネットワークの学習方法については， Stochastic MuZeroと全く同一である．
 Stochastic MuZeroの環境のダイナミクスモデルの学習方法については， 文献~\cite{StochasticMuZero}の$4$節を参照されたい．
 
-\subsubsection{2048-AlphaZeroのMCTS}
+\subsubsection*{2048-AlphaZeroのMCTS}
 \label{subsubsec:mcts}
 2048-AlphaZeroは$2$つのニューラルネットワークを持つ．
 $1$つ目は， 状態盤面$s$の特徴量を入力として$s$における方策， $s$の価値を出力するニューラルネットワーク$f$である．
 $2$つ目は， afterstate盤面$s'$の特徴量を入力として$s'$の価値を出力するニューラルネットワーク$g$である．
-$2$つのニューラルネットワーク$f$と$g$を用いてMCTSを実行する．
+これら$2$つのニューラルネットワーク$f$と$g$を用いてMCTSを実行する．
 
 \ref{sec:rule}節で述べたように， 2048は状態とafterstateという$2$種類の盤面が交互に繰り返される．
-そのため2048-AlphaZeroはMCTSにおいて， それぞれに対応する状態ノードとafterstateノードという$2$種類のノードから成る探索木を用いる~(文献~\cite{StochasticMuZero}ではそれぞれdecisionノード， chanceノードと呼ばれた)．
+そのため2048-AlphaZeroはMCTSにおいて， それぞれに対応するdecisionノードとchanceノードという$2$種類のノードから成る探索木を用いる．
 探索木中のそれぞれのノード$s$は， 以下の$5$つの統計量を管理する．
 \begin{itemize}
   \item $N(s) \cdots$探索中に$s$を訪問した回数
@@ -237,13 +238,14 @@ $2$つのニューラルネットワーク$f$と$g$を用いてMCTSを実行す�
   \item $P(s) \cdots$ $s$の親から$s$への遷移確率
   \item $R(s) \cdots$ $s$の親から$s$へ遷移するときに獲得する即時報酬~(得点)
 \end{itemize}
-MCTSは選択， 評価， 逆伝播， 展開の$4$つのステップを繰り返すことで， 探索木を大きくする．
+探索木は最初， 現在の盤面~(状態)~に対応するdecisionノード$s_0$のみから成る．
+MCTSは選択， 評価， 逆伝播， 展開の$4$つのステップを繰り返すことで， $s_0$を根とする探索木を大きくする．
 この$4$つのステップはまとめてシミュレーションと呼ばれる．
-すなわちシミュレーションを繰り返すことで深い探索を行い， 良い行動を選択することができる．
+シミュレーションを繰り返すことで深い探索を行い， 良い行動を選択することができる．
 以下ではそれぞれのステップについて説明する．
 
 \paragraph{選択}
-現在のゲーム木の根ノード$s_0$~(decisionノード)~から有望な子ノードを選択し， これを葉ノード$s_L$に至るまで辿り続ける．
+探索木の根ノード$s_0$~(decisionノード)~から有望な子ノードを選択し， これを葉ノード$s_L$に至るまで辿り続ける．
 decisionノード$s_d$においては， 以下のPUCT式~\ref{eq:puct}が最大となるような子chanceノード$s_c$を選択する．
 \begin{align}
   Q(s_c) + C(s_c)P(s_c)\frac{\sqrt{1+N(s_d)}}{1+N(s_c)}
@@ -251,29 +253,29 @@ decisionノード$s_d$においては， 以下のPUCT式~\ref{eq:puct}が最大
 \end{align}
 ただし$C(s_c)$は探索率を表す．
 これは現段階での価値の推定値$Q(s_c)$と探索項$C(s_c)P(s_c)\sqrt{1+N(s_d)}/(1 + N(s_c))$を合計したものである．
-$N(s_c)$が小さい子ノードほど探索項は大きな値を示す．
+$N(s_c)$が小さい子chanceノードほど探索項は大きな値を示す．
 一方chanceノード$s_c$においては， 単にそれぞれの子decisionノード$s_d$への遷移確率$P(s_d)$に従って確率的に選択する．
 
 \paragraph{評価~(図~\ref{fig:evaluate})}
 選択のステップの葉ノード$s_L$をニューラルネットワークにより評価する．
-$s_L$がdecisionノードである場合には， $s_L$における方策$\pi(\cdot|s_L)$および$s_L$の価値を$v_L$を得る．
-$s_L$がchanceノードである場合には， $s_L$の価値$v_L$のみを得る．
+$s_L$がdecisionノードである場合には， $s_L$に対応する状態における， 方策$\pi(\cdot|s_L)$および価値を$v_L$を$f$で評価することで得る．
+$s_L$がchanceノードである場合には， $s_L$に対応するafterstateの価値$v_L$のみを$g$で評価することで得る．
 
 \paragraph{展開~(図~\ref{fig:expand})}
 $s_L$がdecisionノードである場合には， $s_L$に対応する状態から遷移可能なafterstateを$s_L$の子chanceノードとして探索木に追加する．
 それぞれの子chanceノード$s_c$について， $P(s_c) = \pi(s_c|s_L)$とする．
 
 $s_L$がchanceノードである場合には， $s_L$に対応するafterstateから遷移可能な状態を$s_L$の子decisionノードとして探索木に追加する．
-それぞれの子decisionノード$s_d$について， $P(s_d)$は$s_L$に対応するafterstateから$s_d$に対応する状態へ遷移する環境の確率とする．
+それぞれの子decisionノード$s_d$について， $P(s_d)$は$s_L$に対応するafterstateから$s_d$に対応する状態へ遷移する環境が与える確率とする．
 
 \paragraph{逆伝播~(図~\ref{fig:backpropagate})}
-$s_L$について， $N(s_L, a)=0, W(s_L, a)=0, Q(s_L, a)=0$と初期化する．
-さらに
-さらに$s_0$から$s_L$に至る各ノード$s$について， 以下のように各統計量の値を更新する．
+$s_L$について， $N(s_L)=0, W(s_L)=0, Q(s_L)=0$と初期化する．
+さらに$s_L$から$s_0$に至る各ノード$s_t$について， 以下のように各統計量の値を更新する．
+さらに$s_0$から$s_L$に至る各ノード$s_t$について， 以下のように各統計量の値を更新する．
 \begin{align*}
-  N(s) &\leftarrow N(s) + 1 \\
-  W(s) &\leftarrow W(s) + v_L \\
-  Q(s) &\leftarrow \frac{W(s)}{N(s)}
+  N(s_t) &\leftarrow N(s_t) + 1 \\
+  W(s_t) &\leftarrow W(s_t) + \Sigma_{k=t+1}^{L} R(s_k) + v_L \\
+  Q(s_t) &\leftarrow \frac{W(s)}{N(s)}
 \end{align*}
 
 \begin{figure}
@@ -291,16 +293,16 @@ $s_L$について， $N(s_L, a)=0, W(s_L, a)=0, Q(s_L, a)=0$と初期化する�
   \end{subfigure}
   \begin{subfigure}[T]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\columnwidth]{figures/backpropagate_.pdf}
-    \caption{逆伝播}
-    \label{fig:backpropagate}
+    \includegraphics[width=\columnwidth]{figures/expand_.pdf}
+    \caption{展開}
+    \label{fig:expand}
   \end{subfigure}
   \hspace{3cm}
   \begin{subfigure}[T]{0.4\columnwidth}
     \centering
-    \includegraphics[width=\columnwidth]{figures/expand_.pdf}
-    \caption{展開}
-    \label{fig:expand}
+    \includegraphics[width=\columnwidth]{figures/backpropagate_.pdf}
+    \caption{逆伝播}
+    \label{fig:backpropagate}
   \end{subfigure}
   \caption{MCTSの各ステップ~(オレンジ色のノードはdecisionノード， 青色のノードはchanceノード)}
   \label{fig:mcts}
@@ -315,14 +317,20 @@ $\tau$は温度パラメータと呼ばれ， $0$に近づくほど訪問回数�
 
 \subsubsection*{ニューラルネットワークの学習}
 MCTSによるプレイによって得たデータを使ってニューラルネットワークを訓練する．
-ニューラルネットワークが評価する
-各訪問回数を正規化した$\pmb{\pi}$
-すなわち式~\ref{eq:az_loss}で表される誤差関数$l$を最小化するようにパラメータを更新する．
+根ノード$s_0$をMCTSが評価する$n$ステップリターンを$z$とする．
+これを方策・価値ニューラルネットワーク$f$の価値の出力$v$の学習ターゲットとする．
+根ノード$s_0$から各子chanceノードへの訪問回数を正規化した確率分布を$\pmb{p}$とする．
+これを方策・価値ニューラルネットワーク$f$の方策の出力$\pmb{\pi}$の学習ターゲットする．
+よってまとめると式~\ref{eq:az_loss}で表される誤差関数$l$を最小化するようにパラメータを更新する．
+afterstateを評価する価値ニューラルネットワーク$g$の学習も， $f$の価値関数の学習と同様に行う．
+ただし実際の価値関数の学習においては付録~\ref{subsec:nn_impl}節で説明するように， 最小二乗誤差ではなくCross Entropy誤差を最小化するようにパラメータを更新する．
 \begin{align}
 \label{eq:az_loss}
-l = (z-v)^2 - \pmb{\pi}^{\mathrm{T}} \log \mathbf{p}
+l = (z-v)^2 - \pmb{p}^{\mathrm{T}} \log \pmb{\pi}
 \end{align}
-ただし実際の価値関数の学習においては付録~\ref{subsec:nn_impl}節で説明するように， 最小二乗誤差ではなくCross Entropy誤差を最小化するようにパラメータを更新する．
 
+なお学習に使用するデータはPrioritized Experience Replay~\cite{prioritized}によってサンプルする．
+Stochastic MuZeroは価値の予測誤差$|z-v|$をpriorityとした．
 
 \subsection{先行研究の考察}
+ここまでで2048の強化学習研究を概観した．
