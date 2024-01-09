@@ -7,6 +7,7 @@
 よって$1$行の全パターンについて， ある一方向を選択したときの遷移先を予め計算しておくで， 全方向に対する盤面全体の遷移を高速に行える．
 
 \section{完全解析の実装}
+\label{sec:solving_impl}
 図~\ref{fig:symmtric_boards}に示すように， 回転・反転に関して同じ盤面は$1$つの状態として扱った．
 またそれぞれの状態は$64$ビット整数で表現された．
 \begin{figure}[t]
@@ -70,12 +71,13 @@ $3\times3$盤面の2048の実験では$D=201$， $4\times3$盤面では$D=401$�
 \caption{ハイパーパラメータ}
 \label{table:hyperparametr}
 \centering
-\begin{tabular}{r|r}
+\begin{tabular}{r|c}
     \hline \hline
     ハイパーパラメータ & 値 \\ \hline
     optimizer & Adam~\cite{Adam} \\
     学習率 & $0.0003$ \\
     weight decay & $0.0001$ \\
+    バッチサイズ & $1,024$ \\
     バッファサイズ & $16,777,216(=2^{24})$ \\
     \hline
 \end{tabular}
