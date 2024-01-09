@@ -159,6 +159,7 @@ $n$をエピソードの終了時刻$T$とすると， $n$ステップリター�
 Mnihら~\cite{A3C}が提案したasynchronous advantage actor-critic~(A3C)~は， 方策関数と価値関数をニューラルネットワークにより近似したactor-criticな手法で， Atariや物理シミュレーションの実験で高い成果を収めた．
 A3Cの発表以降， 方策ベースな深層強化学習の研究は数多くなされている．
 特にSchulmanらが提案したProximal Policy Optimization~(PPO)~\cite{PPO}は有名手法の$1$つである．
+PPOは方策の急激な更新を抑えるように工夫した手法で， 学習の安定性と実装のしやすさから現在でも多くの分野で用いられている．
 
 \subsection{AlphaZeroとMuZero}
 \label{subsec:zero}
@@ -334,3 +335,6 @@ Stochastic MuZeroは価値の予測誤差$|z-v|$をpriorityとした．
 
 \subsection{先行研究の考察}
 ここまでで2048の強化学習研究を概観した．
+TD afterstate学習とAfterstate PPOはともに， 現在観測している状態からafterstateまでの遷移を内部で試行することを特徴とする．
+またStochastic MuZero~(2048-AlphaZero)~はMCTSによる深いプランニングを行う．
+よって現状2048で成果を出した手法はいずれも， 

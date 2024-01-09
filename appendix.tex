@@ -27,7 +27,9 @@ $4\times3$盤面の2048の完全解析は状態列挙に約$45$日， 価値計�
 \section{強化学習の実装}
 \subsection{ニューラルネットワークの詳細}
 \label{subsec:nn_impl}
-2048-AlphaZeroのニューラルネットワークは盤面の特徴量を入力として， 方策と価値を出力する．
+2048-AlphaZeroは状態を評価するニューラルネットワークとafterstateを評価するニューラルネットワークを持つ．
+状態を評価するニューラルネットワークは方策と価値を出力し， afterstateを評価するニューラルネットワークは価値を出力する．
+状態， afterstateの盤面はいずれも以下のように， ニューラルネットワークへの入力特徴量に変換される．
 盤面サイズ$H \times W$のルールの下では理論上の最高到達タイルは$2^{H \times W + 1}$である．
 そのため入力は空きマスのチャネルを加えた$H \times W + 2$チャネルの$H \times W$ピクセルから成る．
 $n$番目~($0 \leq n \leq H \times W + 1$)~のチャネルの$(i,j)$成分は， 盤面の$i$行$j$列目のタイルが$2^n$である場合に$1$， そうでなければ$0$である．
@@ -54,12 +56,36 @@ $n$番目~($0 \leq n \leq H \times W + 1$)~のチャネルの$(i,j)$成分は，
 推論時にはニューラルネットワークの価値のロジットの出力を， softmaxを通して全体の総和を$1$にする．
 これを$0$から$D$までのそれぞれの重みとして， 重み付け平均$y$を計算する．
 最後に$h(x)$の逆関数である$h^{-1}(y)= \epsilon^{-1} (y + 0.5\epsilon^{-1} + 1.0) - 0.5 \sqrt{4.0 \epsilon^{-3} y + 1.004 \epsilon^{-4}}$によって， $x=h^{-1}(y)$を得る．
-$3\times3$盤面の2048の実験では$D=200$， $4\times3$盤面では$D=400$， $4\times4$盤面では$D=600$とした．
+$3\times3$盤面の2048の実験では$D=201$， $4\times3$盤面では$D=401$， $4\times4$盤面では$D=601$とした．
+図~\ref{fig:nn_arch}に$3\times3$盤面の2048-AlphaZeroの， 方策・価値ニューラルネットワークの構造を示す．
+また表~\ref{table:hyperparametr}に学習に用いたハイパーパラメータの表を示す．
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.6\linewidth{}]{figures/nn_arch.pdf}
+    \caption{ニューラルネットワークの構造}
+    \label{fig:nn_arch}
+\end{figure}
+
+\begin{table}[t]
+\caption{ハイパーパラメータ}
+\label{table:hyperparametr}
+\centering
+\begin{tabular}{r|r}
+    \hline \hline
+    ハイパーパラメータ & 値 \\ \hline
+    optimizer & Adam~\cite{Adam} \\
+    学習率 & $0.0003$ \\
+    weight decay & $0.0001$ \\
+    バッファサイズ & $16,777,216(=2^{24})$ \\
+    \hline
+\end{tabular}
+\end{table}
 
 \subsection{Prioritized Experience Replayの実装}
 Prioritized Experience Replay~\cite{prioritized}は学習に使用するデータを一様ランダムではなく， priorityと呼ばれる重みに従ってサンプルするExperience Replayである．
 $i$番目のデータのpriorityを$p_i$とする．
 このとき$i$番目のデータはハイパーパラメータ$\alpha$を用いて， 確率$P(i) = \frac{p_{i}^{\alpha}}{\Sigma_k p_{k}^{\alpha}}$でサンプルされる．
+ただし学習時には誤差に$w_i = (\frac{1}{N}\cdot \frac{1}{P(i)})$~($N$はバッファサイズ)~をかけることで， サンプルにおけるバイアスを修正する．
 
 Prioritized Experience Replayからのデータのサンプル， およびpriorityの更新は， sum-treeという二分木でデータを管理することで$\mathcal{O}(\log n)$で行うことができる．
 sum-treeの葉ノードはpriorityの値を保持し， 各ノードは左右の子ノードの合計値を保持する．
